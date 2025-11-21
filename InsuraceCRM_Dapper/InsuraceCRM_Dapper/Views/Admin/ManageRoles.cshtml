@@ -1,0 +1,45 @@
+@model ManageRolesViewModel
+@{
+    ViewData["Title"] = "Manage Roles";
+}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h4 class="card-title mb-4">Manage User Roles</h4>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model.Users)
+                    {
+                        <tr>
+                            <td>@user.Name</td>
+                            <td>@user.Email</td>
+                            <td>@user.Role</td>
+                            <td>
+                                <form asp-action="UpdateRole" method="post" class="d-flex align-items-center gap-2">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="userId" value="@user.Id" />
+                                    <select name="role" class="form-select form-select-sm">
+                                        @foreach (var role in Model.Roles)
+                                        {
+                                            <option value="@role" selected="@(role == user.Role)">@role</option>
+                                        }
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

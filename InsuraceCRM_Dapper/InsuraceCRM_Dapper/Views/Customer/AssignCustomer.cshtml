@@ -1,0 +1,34 @@
+@model AssignCustomerViewModel
+@{
+    ViewData["Title"] = "Assign Customer";
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h4 class="card-title mb-4">Assign @Model.CustomerName</h4>
+                <form asp-action="AssignCustomer" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="CustomerId" />
+                    <div class="mb-3">
+                        <label asp-for="AssignedEmployeeId" class="form-label">Employee</label>
+                        <select asp-for="AssignedEmployeeId" class="form-select">
+                            <option value="">-- Select Employee --</option>
+                            @foreach (var employee in Model.Employees)
+                            {
+                                var isSelected = employee.Id == Model.AssignedEmployeeId ? "selected" : string.Empty;
+                                <option value="@employee.Id" @isSelected>
+                                    @employee.Name (@employee.Email)
+                                </option>
+                            }
+                        </select>
+                        <span asp-validation-for="AssignedEmployeeId" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Assign</button>
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

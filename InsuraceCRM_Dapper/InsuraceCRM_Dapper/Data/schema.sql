@@ -1,0 +1,42 @@
+CREATE TABLE Users (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(150) NOT NULL,
+    Email NVARCHAR(256) NOT NULL UNIQUE,
+    PasswordHash NVARCHAR(500) NOT NULL,
+    Role NVARCHAR(50) NOT NULL
+);
+
+CREATE TABLE Customers (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(150) NOT NULL,
+    MobileNumber NVARCHAR(50) NOT NULL,
+    Location NVARCHAR(150) NULL,
+    InsuranceType NVARCHAR(100) NULL,
+    AssignedEmployeeId INT NULL REFERENCES Users(Id),
+    CreatedDate DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
+CREATE TABLE FollowUps (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    CustomerId INT NOT NULL REFERENCES Customers(Id),
+    FollowUpDate DATE NOT NULL,
+    FollowUpNote NVARCHAR(1000) NULL,
+    FollowUpStatus NVARCHAR(100) NULL,
+    NextReminderDateTime DATETIME2 NULL
+);
+
+CREATE TABLE Reminders (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    CustomerId INT NOT NULL REFERENCES Customers(Id),
+    EmployeeId INT NOT NULL REFERENCES Users(Id),
+    ReminderDateTime DATETIME2 NOT NULL,
+    Note NVARCHAR(500) NULL,
+    IsShown BIT NOT NULL DEFAULT 0
+);
+
+CREATE NONCLUSTERED INDEX IX_Customers_AssignedEmployee
+    ON Customers (AssignedEmployeeId);
+
+CREATE NONCLUSTERED INDEX IX_Reminders_Employee_ReminderDate
+    ON Reminders (EmployeeId, ReminderDateTime)
+    INCLUDE (IsShown);
