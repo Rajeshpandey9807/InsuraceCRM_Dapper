@@ -1,0 +1,44 @@
+@model FollowUpFormViewModel
+@{
+    ViewData["Title"] = "Add Follow-up";
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h4 class="card-title mb-4">Add Follow-up - @Model.CustomerName</h4>
+                <form asp-action="Add" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="CustomerId" />
+                    <div class="mb-3">
+                        <label asp-for="FollowUpDate" class="form-label"></label>
+                        <input asp-for="FollowUpDate" class="form-control" type="date" />
+                        <span asp-validation-for="FollowUpDate" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="FollowUpStatus" class="form-label"></label>
+                        <input asp-for="FollowUpStatus" class="form-control" />
+                        <span asp-validation-for="FollowUpStatus" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="FollowUpNote" class="form-label"></label>
+                        <textarea asp-for="FollowUpNote" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="FollowUpNote" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="NextReminderDateTime" class="form-label"></label>
+                        <input asp-for="NextReminderDateTime" class="form-control" type="datetime-local" asp-format="{0:yyyy-MM-ddTHH:mm}" />
+                        <span asp-validation-for="NextReminderDateTime" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <a asp-controller="Customer" asp-action="Index" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

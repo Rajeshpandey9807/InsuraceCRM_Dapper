@@ -1,0 +1,52 @@
+@model CustomerListViewModel
+@{
+    ViewData["Title"] = "Customers";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Customers</h2>
+    @if (Model.CanEdit)
+    {
+        <a asp-action="Add" class="btn btn-primary">Add Customer</a>
+    }
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Mobile</th>
+                        <th>Location</th>
+                        <th>Insurance Type</th>
+                        <th>Assigned To</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var customer in Model.Customers)
+                    {
+                        <tr>
+                            <td>@customer.Name</td>
+                            <td>@customer.MobileNumber</td>
+                            <td>@customer.Location</td>
+                            <td>@customer.InsuranceType</td>
+                            <td>@(customer.AssignedEmployeeName ?? "Unassigned")</td>
+                            <td class="text-end">
+                                <a asp-controller="FollowUp" asp-action="History" asp-route-customerId="@customer.Id" class="btn btn-sm btn-info">History</a>
+                                <a asp-controller="FollowUp" asp-action="Add" asp-route-customerId="@customer.Id" class="btn btn-sm btn-success">Follow-Up</a>
+                                @if (Model.CanEdit)
+                                {
+                                    <a asp-action="Edit" asp-route-id="@customer.Id" class="btn btn-sm btn-secondary">Edit</a>
+                                    <a asp-action="AssignCustomer" asp-route-customerId="@customer.Id" class="btn btn-sm btn-warning">Assign</a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
