@@ -28,14 +28,14 @@ public class UserRepository : IUserRepository
     public async Task UpdateAsync(User user)
     {
         const string sql = @"
-           UPDATE Users
-            SET FullName = @Name,
+            UPDATE Users
+            SET Name = @Name,
                 Email = @Email,
                 PasswordHash = @PasswordHash,
                 Mobile = @Mobile,
-                RoleId = @RoleId,
+                Role = @Role,
                 IsActive = @IsActive
-            WHERE Id = @Id";
+            WHERE Id = @Id;";
 
         using var connection = await _connectionFactory.CreateConnectionAsync();
         await connection.ExecuteAsync(sql, user);
@@ -78,10 +78,11 @@ public class UserRepository : IUserRepository
 
     public async Task<IEnumerable<User>> GetAllAsync(bool includeInactive = false)
     {
-        const string sql = @"SELECT *
+        const string sql = @"
+            SELECT *
             FROM Users
-            WHERE IsActive = 1
-            ORDER BY FullName;";
+            WHERE (@IncludeInactive = 1 OR IsActive = 1)
+            ORDER BY Name;";
 
         using var connection = await _connectionFactory.CreateConnectionAsync();
         return await connection.QueryAsync<User>(sql, new { IncludeInactive = includeInactive });

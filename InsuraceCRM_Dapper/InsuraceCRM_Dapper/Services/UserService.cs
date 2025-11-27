@@ -52,7 +52,6 @@ public class UserService : IUserService
         existingUser.Email = user.Email;
         existingUser.Mobile = user.Mobile;
         existingUser.Role = user.Role;
-        existingUser.RoleId = user.RoleId;
         existingUser.IsActive = user.IsActive;
 
         if (!string.IsNullOrWhiteSpace(newPassword))

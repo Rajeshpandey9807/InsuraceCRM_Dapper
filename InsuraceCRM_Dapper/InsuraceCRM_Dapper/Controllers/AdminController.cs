@@ -96,7 +96,6 @@ public class AdminController : Controller
                 Email = user.Email,
                 Mobile = user.Mobile,
                 Role = user.Role,
-                RoleId= user.RoleId,
                 IsActive = user.IsActive
             },
             Roles = AllowedRoles
@@ -132,7 +131,6 @@ public class AdminController : Controller
             Email = viewModel.Form.Email,
             Mobile = viewModel.Form.Mobile,
             Role = viewModel.Form.Role,
-            RoleId= viewModel.Form.RoleId,
             IsActive = viewModel.Form.IsActive
         };
 
