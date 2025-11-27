@@ -50,7 +50,8 @@ public class UserService : IUserService
         {
             Name = "System Administrator",
             Email = adminEmail,
-            Role = "Admin"
+            Role = "1",
+            Mobile = "896071117"
         };
 
         adminUser.PasswordHash = _passwordHasher.HashPassword(adminUser, "Admin@123");

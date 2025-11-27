@@ -17,8 +17,8 @@ public class UserRepository : IUserRepository
     public async Task<int> InsertAsync(User user)
     {
         const string sql = @"
-            INSERT INTO Users (Name, Email, PasswordHash, Role)
-            VALUES (@Name, @Email, @PasswordHash, @Role);
+            INSERT INTO Users (FullName, Email, PasswordHash, Mobile,RoleId)
+            VALUES (@Name, @Email, @PasswordHash,@Mobile, @Role);
             SELECT CAST(SCOPE_IDENTITY() as int);";
 
         using var connection = await _connectionFactory.CreateConnectionAsync();
@@ -55,9 +55,9 @@ public class UserRepository : IUserRepository
 
     public async Task<User?> GetByIdAsync(int id)
     {
-        const string sql = "SELECT * FROM Users WHERE Id = @Id;";
+        const string sql = "SELECT * FROM Users WHERE CustomerID = @Id;";
         using var connection = await _connectionFactory.CreateConnectionAsync();
-        return await connection.QuerySingleOrDefaultAsync<User>(sql, new { Id = id });
+        return await connection.QuerySingleOrDefaultAsync<User>(sql, new { id = 4 });
     }
 
     public async Task<User?> GetByEmailAsync(string email)
@@ -69,7 +69,7 @@ public class UserRepository : IUserRepository
 
     public async Task<IEnumerable<User>> GetAllAsync()
     {
-        const string sql = "SELECT * FROM Users ORDER BY Name;";
+        const string sql = "SELECT * FROM Users ORDER BY FullName;";
         using var connection = await _connectionFactory.CreateConnectionAsync();
         return await connection.QueryAsync<User>(sql);
     }

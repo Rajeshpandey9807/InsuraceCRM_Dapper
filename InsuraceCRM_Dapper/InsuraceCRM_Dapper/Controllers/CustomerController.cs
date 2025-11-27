@@ -29,7 +29,7 @@ public class CustomerController : Controller
 
         var customers = (await _customerService.GetCustomersForUserAsync(currentUser)).ToList();
         var userLookup = (await _userService.GetAllUsersAsync())
-            .ToDictionary(u => u.Id, u => u.Name);
+            .ToDictionary(u => u.CustomerID, u => u.Name);
 
         foreach (var customer in customers)
         {
@@ -44,8 +44,13 @@ public class CustomerController : Controller
             Customers = customers,
             CanEdit = IsManagerOrAdmin(currentUser.Role)
         };
-
         return View(viewModel);
+        //return View();
+    }
+    public async Task<IEnumerable<Customer>> GetAllCustomers()
+    {
+        var customer = await _customerService.GetAllCustomersAsync();
+        return customer;
     }
 
     [Authorize(Roles = "Admin,Manager")]
@@ -96,7 +101,7 @@ public class CustomerController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    [Authorize(Roles = "Admin,Manager")]
+    //[Authorize(Roles = "Admin,Manager")]
     [HttpGet]
     public async Task<IActionResult> AssignCustomer(int customerId)
     {
@@ -120,7 +125,8 @@ public class CustomerController : Controller
         return View(viewModel);
     }
 
-    [Authorize(Roles = "Admin,Manager")]
+
+    //[Authorize(Roles = "Admin,Manager")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AssignCustomer(AssignCustomerViewModel viewModel)
