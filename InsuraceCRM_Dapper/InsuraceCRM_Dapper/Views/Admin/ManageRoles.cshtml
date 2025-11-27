@@ -1,45 +1,202 @@
+@using System.Linq
 @model ManageRolesViewModel
 @{
     ViewData["Title"] = "Manage Roles";
+    var successMessage = TempData["RoleMessage"] as string;
+    var errorMessage = TempData["RoleError"] as string;
+    var hasRoles = Model.Roles.Any();
 }
 
-<div class="card shadow-sm">
-    <div class="card-body">
-        <h4 class="card-title mb-4">Manage User Roles</h4>
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var user in Model.Users)
-                    {
-                        <tr>
-                            <td>@user.Name</td>
-                            <td>@user.Email</td>
-                            <td>@user.Role</td>
-                            <td>
-                                <form asp-action="UpdateRole" method="post" class="d-flex align-items-center gap-2">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="userId" value="@user.Id" />
-                                    <select name="role" class="form-select form-select-sm">
-                                        @foreach (var role in Model.Roles)
-                                        {
-                                            <option value="@role" selected="@(role == user.Role)">@role</option>
-                                        }
-                                    </select>
-                                    <button type="submit" class="btn btn-sm btn-primary">Save</button>
-                                </form>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h2 class="mb-1">Role Management</h2>
+        <p class="text-muted mb-0">Create roles, edit descriptions, and assign them to team members.</p>
+    </div>
+    <a asp-action="Users" class="btn btn-outline-secondary">Back to Users</a>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(successMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @successMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @errorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-5">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h4 class="card-title mb-3">Create Role</h4>
+                <p class="text-muted small">Roles define the permissions your team members receive across the CRM.</p>
+                <form asp-action="CreateRole" method="post" novalidate>
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="NewRole.Name" class="form-label"></label>
+                        <input asp-for="NewRole.Name" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="NewRole.Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="NewRole.Description" class="form-label"></label>
+                        <textarea asp-for="NewRole.Description" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="NewRole.Description" class="text-danger"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Create Role</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="card-title mb-0">Existing Roles</h4>
+                    <span class="badge bg-light text-dark">@Model.Roles.Count() total</span>
+                </div>
+                @if (!Model.Roles.Any())
+                {
+                    <div class="alert alert-info mb-0">
+                        No roles defined yet. Create your first role to enable assignments.
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Role</th>
+                                    <th>Description</th>
+                                    <th>Users</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var role in Model.Roles)
+                                {
+                                    var userCount = Model.Users.Count(u => string.Equals(u.Role, role.Name, StringComparison.OrdinalIgnoreCase));
+                                    var deleteDisabled = role.IsSystem || userCount > 0;
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">@role.Name</div>
+                                            @if (role.IsSystem)
+                                            {
+                                                <span class="badge bg-secondary-subtle text-secondary-emphasis mt-1">System role</span>
+                                            }
+                                        </td>
+                                        <td class="text-muted">
+                                            @(string.IsNullOrWhiteSpace(role.Description) ? "No description provided" : role.Description)
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-light text-dark">@userCount</span>
+                                        </td>
+                                        <td class="text-end text-nowrap">
+                                            <a asp-action="EditRole"
+                                               asp-route-id="@role.Id"
+                                               class="btn btn-sm btn-outline-primary me-2">
+                                                Edit
+                                            </a>
+                                            <form asp-action="DeleteRole"
+                                                  method="post"
+                                                  class="d-inline-block">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@role.Id" />
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-outline-danger"
+                                                        @(deleteDisabled ? "disabled" : null)>
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
         </div>
     </div>
 </div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h4 class="card-title mb-4">Assign Roles to Users</h4>
+        @if (!Model.Users.Any())
+        {
+            <div class="alert alert-info mb-0">
+                No users found. Create users first to assign roles.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model.Users)
+                        {
+                            <tr>
+                                <td>@user.Name</td>
+                                <td>@user.Email</td>
+                                <td>@user.Role</td>
+                                <td>
+                                    <form asp-action="UpdateRole" method="post" class="d-flex align-items-center gap-2">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="userId" value="@user.Id" />
+                                        <select name="role"
+                                                class="form-select form-select-sm"
+                                                @(hasRoles ? null : "disabled")>
+                                            @if (!hasRoles)
+                                            {
+                                                <option value="">No roles available</option>
+                                            }
+                                            else
+                                            {
+                                                foreach (var role in Model.Roles)
+                                                {
+                                                    var isSelected = string.Equals(role.Name, user.Role, StringComparison.OrdinalIgnoreCase);
+                                                    <option value="@role.Name" selected="@(isSelected)">
+                                                        @role.Name
+                                                    </option>
+                                                }
+                                            }
+                                        </select>
+                                        <button type="submit"
+                                                class="btn btn-sm btn-primary"
+                                                @(hasRoles ? null : "disabled")>
+                                            Save
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

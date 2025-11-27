@@ -30,17 +30,22 @@ builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<IFollowUpRepository, FollowUpRepository>();
 builder.Services.AddScoped<IReminderRepository, ReminderRepository>();
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IFollowUpService, FollowUpService>();
 builder.Services.AddScoped<IReminderService, ReminderService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
 
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
+    var roleService = scope.ServiceProvider.GetRequiredService<IRoleService>();
+    await roleService.EnsureDefaultRolesAsync();
+
     var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
     await userService.EnsureDefaultAdminAsync();
 }

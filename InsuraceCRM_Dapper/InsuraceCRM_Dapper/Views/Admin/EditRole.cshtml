@@ -1,0 +1,51 @@
+@model RoleFormViewModel
+@{
+    ViewData["Title"] = "Edit Role";
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h2 class="mb-1">Edit @Model.Name</h2>
+        <p class="text-muted mb-0">Update the role details and keep your permission model organized.</p>
+    </div>
+    <a asp-action="ManageRoles" class="btn btn-outline-secondary">Back to Roles</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form asp-action="EditRole" method="post" novalidate>
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="IsSystem" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name"
+                       class="form-control"
+                       autocomplete="off"
+                       @(Model.IsSystem ? "readonly" : null) />
+                <span asp-validation-for="Name" class="text-danger"></span>
+                @if (Model.IsSystem)
+                {
+                    <small class="text-muted d-block mt-1">System roles cannot be renamed.</small>
+                }
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a asp-action="ManageRoles" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

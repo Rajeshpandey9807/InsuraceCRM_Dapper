@@ -10,23 +10,18 @@ namespace InsuraceCRM_Dapper.Controllers;
 [Authorize(Roles = "Admin")]
 public class AdminController : Controller
 {
-    private static readonly string[] AllowedRoles = { "Admin", "Manager", "Employee" };
     private readonly IUserService _userService;
+    private readonly IRoleService _roleService;
 
-    public AdminController(IUserService userService)
+    public AdminController(IUserService userService, IRoleService roleService)
     {
         _userService = userService;
+        _roleService = roleService;
     }
 
     public async Task<IActionResult> ManageRoles()
     {
-        var users = await _userService.GetAllUsersAsync(includeInactive: true);
-        var viewModel = new ManageRolesViewModel
-        {
-            Users = users,
-            Roles = AllowedRoles
-        };
-
+        var viewModel = await BuildManageRolesViewModel();
         return View(viewModel);
     }
 
@@ -34,13 +29,112 @@ public class AdminController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateRole(int userId, string role)
     {
-        if (!AllowedRoles.Contains(role))
+        if (!await _roleService.ExistsAsync(role))
         {
-            ModelState.AddModelError(string.Empty, "Invalid role selection.");
-            return await ManageRoles();
+            TempData["RoleError"] = "Invalid role selection.";
+            return RedirectToAction(nameof(ManageRoles));
         }
 
         await _userService.UpdateRoleAsync(userId, role);
+        TempData["RoleMessage"] = "User role updated.";
+        return RedirectToAction(nameof(ManageRoles));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateRole([Bind(Prefix = "NewRole")] RoleFormViewModel form)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View("ManageRoles", await BuildManageRolesViewModel(form));
+        }
+
+        try
+        {
+            await _roleService.CreateAsync(new Role
+            {
+                Name = form.Name,
+                Description = form.Description
+            });
+
+            TempData["RoleMessage"] = $"Role '{form.Name}' was created.";
+            return RedirectToAction(nameof(ManageRoles));
+        }
+        catch (InvalidOperationException ex)
+        {
+            ModelState.AddModelError($"{nameof(ManageRolesViewModel.NewRole)}.{nameof(RoleFormViewModel.Name)}", ex.Message);
+            return View("ManageRoles", await BuildManageRolesViewModel(form));
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> EditRole(int id)
+    {
+        var role = await _roleService.GetByIdAsync(id);
+        if (role is null)
+        {
+            return NotFound();
+        }
+
+        var viewModel = new RoleFormViewModel
+        {
+            Id = role.Id,
+            Name = role.Name,
+            Description = role.Description,
+            IsSystem = role.IsSystem
+        };
+
+        return View(viewModel);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditRole(RoleFormViewModel form)
+    {
+        if (form.Id is null)
+        {
+            return BadRequest();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return View(form);
+        }
+
+        try
+        {
+            await _roleService.UpdateAsync(new Role
+            {
+                Id = form.Id.Value,
+                Name = form.Name,
+                Description = form.Description,
+                IsSystem = form.IsSystem
+            });
+
+            TempData["RoleMessage"] = $"Role '{form.Name}' was updated.";
+            return RedirectToAction(nameof(ManageRoles));
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or KeyNotFoundException)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
+            return View(form);
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteRole(int id)
+    {
+        try
+        {
+            await _roleService.DeleteAsync(id);
+            TempData["RoleMessage"] = "Role was deleted.";
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or KeyNotFoundException)
+        {
+            TempData["RoleError"] = ex.Message;
+        }
+
         return RedirectToAction(nameof(ManageRoles));
     }
 
@@ -54,7 +148,7 @@ public class AdminController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateUser([Bind(Prefix = "NewUser")] UserFormViewModel viewModel)
     {
-        if (!AllowedRoles.Contains(viewModel.Role))
+        if (!await _roleService.ExistsAsync(viewModel.Role))
         {
             ModelState.AddModelError("NewUser.Role", "Invalid role selection.");
         }
@@ -87,6 +181,7 @@ public class AdminController : Controller
             return NotFound();
         }
 
+        var roles = await GetRoleNamesAsync();
         var viewModel = new EditUserViewModel
         {
             Form = new UserFormViewModel
@@ -98,7 +193,7 @@ public class AdminController : Controller
                 Role = user.Role,
                 IsActive = user.IsActive
             },
-            Roles = AllowedRoles
+            Roles = roles
         };
 
         return View(viewModel);
@@ -113,14 +208,14 @@ public class AdminController : Controller
             return BadRequest();
         }
 
-        if (!AllowedRoles.Contains(viewModel.Form.Role))
+        if (!await _roleService.ExistsAsync(viewModel.Form.Role))
         {
             ModelState.AddModelError("Form.Role", "Invalid role selection.");
         }
 
         if (!ModelState.IsValid)
         {
-            viewModel.Roles = AllowedRoles;
+            viewModel.Roles = await GetRoleNamesAsync();
             return View(viewModel);
         }
 
@@ -154,12 +249,63 @@ public class AdminController : Controller
 
     private async Task<ManageUsersViewModel> BuildManageUsersViewModel(UserFormViewModel? form = null)
     {
-        var users = await _userService.GetAllUsersAsync(includeInactive: true);
+        var usersTask = _userService.GetAllUsersAsync(includeInactive: true);
+        var rolesTask = GetRoleNamesAsync();
+
+        await Task.WhenAll(usersTask, rolesTask);
+
+        var users = await usersTask;
+        var roleNames = (await rolesTask).ToList();
+        var newUser = form ?? new UserFormViewModel();
+
+        if (roleNames.Any())
+        {
+            var selectedRole = newUser.Role;
+            var selectionExists = !string.IsNullOrWhiteSpace(selectedRole) &&
+                roleNames.Any(r => string.Equals(r, selectedRole, StringComparison.OrdinalIgnoreCase));
+
+            if (!selectionExists)
+            {
+                newUser.Role = roleNames.First();
+            }
+        }
+        else
+        {
+            newUser.Role = string.Empty;
+        }
+
         return new ManageUsersViewModel
         {
             Users = users.OrderBy(u => u.Name),
-            NewUser = form ?? new UserFormViewModel(),
-            Roles = AllowedRoles
+            NewUser = newUser,
+            Roles = roleNames
         };
+    }
+
+    private async Task<ManageRolesViewModel> BuildManageRolesViewModel(RoleFormViewModel? newRoleForm = null)
+    {
+        var usersTask = _userService.GetAllUsersAsync(includeInactive: true);
+        var rolesTask = _roleService.GetAllAsync();
+
+        await Task.WhenAll(usersTask, rolesTask);
+
+        var users = (await usersTask).OrderBy(u => u.Name);
+        var roles = (await rolesTask).OrderBy(r => r.Name);
+
+        return new ManageRolesViewModel
+        {
+            Users = users,
+            Roles = roles,
+            NewRole = newRoleForm ?? new RoleFormViewModel()
+        };
+    }
+
+    private async Task<IEnumerable<string>> GetRoleNamesAsync()
+    {
+        var roles = await _roleService.GetAllAsync();
+        return roles
+            .OrderBy(r => r.Name)
+            .Select(r => r.Name)
+            .ToList();
     }
 }
