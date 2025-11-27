@@ -16,13 +16,13 @@ public class DashboardService : IDashboardService
 
     public async Task<DashboardViewModel> GetDashboardAsync(int? employeeId)
     {
-        var remindersTask = _dashboardRepository.GetTodaysRemindersAsync(employeeId);
-        var callCountTask = _dashboardRepository.GetTodaysCallCountAsync(employeeId);
-        var assignedCustomerCountTask = _dashboardRepository.GetAssignedCustomerCountAsync(employeeId);
+        var remindersTask =await _dashboardRepository.GetTodaysRemindersAsync(employeeId);
+        //var callCountTask = _dashboardRepository.GetTodaysCallCountAsync(employeeId);
+        //var assignedCustomerCountTask = _dashboardRepository.GetAssignedCustomerCountAsync(employeeId);
 
-        await Task.WhenAll(remindersTask, callCountTask, assignedCustomerCountTask);
+        //await Task.WhenAll(remindersTask, callCountTask, assignedCustomerCountTask);
 
-        var reminders = remindersTask.Result
+        var reminders = remindersTask
             .Select(r => new ReminderViewModel
             {
                 Id = r.Id,
@@ -37,8 +37,8 @@ public class DashboardService : IDashboardService
         return new DashboardViewModel
         {
             TodaysReminderCount = reminders.Count,
-            TodaysCallCount = callCountTask.Result,
-            AssignedCustomerCount = assignedCustomerCountTask.Result,
+            TodaysCallCount =10, //callCountTask.Result,
+            AssignedCustomerCount =20, //assignedCustomerCountTask.Result,
             TodaysReminders = reminders
         };
     }

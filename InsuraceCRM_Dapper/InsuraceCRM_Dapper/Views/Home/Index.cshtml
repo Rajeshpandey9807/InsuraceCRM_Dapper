@@ -67,15 +67,15 @@
                         </tr>
                     </thead>
                     <tbody>
-                    @foreach (var reminder in Model.TodaysReminders)
-                    {
-                        <tr>
-                            <td>@reminder.CustomerName</td>
-                            <td>@reminder.ReminderDateTime.ToLocalTime().ToString("dd MMM yyyy - hh:mm tt")</td>
-                            <td>@reminder.CustomerMobileNumber</td>
-                            <td>@(string.IsNullOrWhiteSpace(reminder.Note) ? "—" : reminder.Note)</td>
-                        </tr>
-                    }
+                        @foreach (var reminder in Model.TodaysReminders)
+                        {
+                            <tr>
+                                <td>@reminder.CustomerName</td>
+                                <td>@reminder.ReminderDateTime.ToLocalTime().ToString("dd MMM yyyy - hh:mm tt")</td>
+                                <td>@reminder.CustomerMobileNumber</td>
+                                <td>@(string.IsNullOrWhiteSpace(reminder.Note) ? "—" : reminder.Note)</td>
+                            </tr>
+                        }
                     </tbody>
                 </table>
             </div>
