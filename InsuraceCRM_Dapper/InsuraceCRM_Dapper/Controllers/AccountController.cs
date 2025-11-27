@@ -49,19 +49,9 @@ public class AccountController : Controller
             return View(viewModel);
         }
 
-        var role = "";
-        if (user.RoleId == 1)
-        {
-            role = "Admin";
-        }
-        else if (user.RoleId == 2)
-        {
-            role = "Manager";
-        }
-        else
-        {
-            role = "Employee";
-        }
+        var role = string.IsNullOrWhiteSpace(user.Role)
+            ? "Employee"
+            : user.Role;
 
         var claims = new List<Claim>
         {
@@ -69,7 +59,7 @@ public class AccountController : Controller
             new Claim(ClaimTypes.Name, user.Name),
             new Claim(ClaimTypes.Email, user.Email),
             new Claim(ClaimTypes.Role, role),
-            new Claim("role", user.Role)
+            new Claim("role", role)
         };
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
