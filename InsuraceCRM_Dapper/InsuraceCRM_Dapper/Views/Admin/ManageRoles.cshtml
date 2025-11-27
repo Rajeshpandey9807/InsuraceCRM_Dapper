@@ -26,7 +26,7 @@
                             <td>
                                 <form asp-action="UpdateRole" method="post" class="d-flex align-items-center gap-2">
                                     @Html.AntiForgeryToken()
-                                    <input type="hidden" name="userId" value="@user.CustomerID" />
+                                    <input type="hidden" name="userId" value="@user.Id" />
                                     <select name="role" class="form-select form-select-sm">
                                         @foreach (var role in Model.Roles)
                                         {

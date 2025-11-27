@@ -4,7 +4,7 @@ namespace InsuraceCRM_Dapper.Models;
 
 public class User
 {
-    public int CustomerID { get; set; }
+    public int Id { get; set; }
 
     [Required, StringLength(150)]
     public string Name { get; set; } = string.Empty;
@@ -15,9 +15,12 @@ public class User
     [Required]
     public string PasswordHash { get; set; } = string.Empty;
 
-    public string Mobile { get; set; }
-    public string RoleId { get; set; }
+    [Phone]
+    [Display(Name = "Mobile number")]
+    public string? Mobile { get; set; }
 
     [Required, StringLength(50)]
     public string Role { get; set; } = "Employee";
+
+    public bool IsActive { get; set; } = true;
 }
