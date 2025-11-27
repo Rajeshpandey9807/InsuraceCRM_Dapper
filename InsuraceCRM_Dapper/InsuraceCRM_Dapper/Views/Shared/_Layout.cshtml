@@ -10,6 +10,7 @@
 @{
     var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
 }
 <body class="@(isAuthenticated ? "has-side-nav" : string.Empty)">
     <header class="top-bar navbar navbar-dark bg-primary shadow-sm">
@@ -46,7 +47,11 @@
                 <div class="side-nav__title text-uppercase text-white-50">Navigation</div>
                 <nav class="nav flex-column mt-3">
                     <a class="nav-link side-nav-link @(currentController == "Home" ? "active" : string.Empty)" asp-controller="Home" asp-action="Index">Dashboard</a>
-                    <a class="nav-link side-nav-link @(currentController == "Customer" ? "active" : string.Empty)" asp-controller="Customer" asp-action="Index">Customers</a>
+                    <a class="nav-link side-nav-link @(currentController == "Customer" && currentAction != "BulkAssign" ? "active" : string.Empty)" asp-controller="Customer" asp-action="Index">Customers</a>
+                    @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+                    {
+                        <a class="nav-link side-nav-link @(currentController == "Customer" && currentAction == "BulkAssign" ? "active" : string.Empty)" asp-controller="Customer" asp-action="BulkAssign">Bulk Assign</a>
+                    }
                     <a class="nav-link side-nav-link @(currentController == "Reminder" ? "active" : string.Empty)" asp-controller="Reminder" asp-action="Today">Reminders</a>
                     @if (User.IsInRole("Admin"))
                     {
