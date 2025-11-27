@@ -45,9 +45,9 @@ public class CustomerService : ICustomerService
             return await _customerRepository.GetAllAsync();
         }
 
-        if (user.Role.Equals("Employee", StringComparison.OrdinalIgnoreCase) && user.CustomerID > 0)
+        if (user.Role.Equals("Employee", StringComparison.OrdinalIgnoreCase) && user.Id > 0)
         {
-            return await _customerRepository.GetCustomersByEmployeeAsync(user.CustomerID);
+            return await _customerRepository.GetCustomersByEmployeeAsync(user.Id);
         }
 
         return Enumerable.Empty<Customer>();

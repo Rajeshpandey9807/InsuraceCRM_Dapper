@@ -222,6 +222,6 @@ public class FollowUpController : Controller
             return true;
         }
 
-        return customer.AssignedEmployeeId == user.CustomerID;
+        return customer.AssignedEmployeeId == user.Id;
     }
 }

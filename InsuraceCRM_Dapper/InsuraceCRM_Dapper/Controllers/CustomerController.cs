@@ -30,8 +30,8 @@ public class CustomerController : Controller
         }
 
         var customers = (await _customerService.GetCustomersForUserAsync(currentUser)).ToList();
-        var userLookup = (await _userService.GetAllUsersAsync())
-            .ToDictionary(u => u.CustomerID, u => u.Name);
+        var userLookup = (await _userService.GetAllUsersAsync(includeInactive: true))
+            .ToDictionary(u => u.Id, u => u.Name);
 
         foreach (var customer in customers)
         {
@@ -194,9 +194,9 @@ public class CustomerController : Controller
         int? selectedEmployeeId = null)
     {
         var customers = (await _customerService.GetAllCustomersAsync()).ToList();
-        var allUsers = (await _userService.GetAllUsersAsync()).ToList();
+        var allUsers = (await _userService.GetAllUsersAsync(includeInactive: true)).ToList();
 
-        var userLookup = allUsers.ToDictionary(u => u.CustomerID, u => u.Name);
+        var userLookup = allUsers.ToDictionary(u => u.Id, u => u.Name);
         foreach (var customer in customers)
         {
             if (customer.AssignedEmployeeId.HasValue &&
@@ -207,7 +207,7 @@ public class CustomerController : Controller
         }
 
         var employees = allUsers
-            .Where(u => u.Role.Equals("Employee", StringComparison.OrdinalIgnoreCase))
+            .Where(u => u.IsActive && u.Role.Equals("Employee", StringComparison.OrdinalIgnoreCase))
             .OrderBy(u => u.Name)
             .ToList();
 

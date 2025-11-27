@@ -17,8 +17,8 @@ public class UserRepository : IUserRepository
     public async Task<int> InsertAsync(User user)
     {
         const string sql = @"
-            INSERT INTO Users (FullName, Email, PasswordHash, Mobile,RoleId)
-            VALUES (@Name, @Email, @PasswordHash,@Mobile, @Role);
+            INSERT INTO Users (Name, Email, PasswordHash, Mobile, Role, IsActive)
+            VALUES (@Name, @Email, @PasswordHash, @Mobile, @Role, @IsActive);
             SELECT CAST(SCOPE_IDENTITY() as int);";
 
         using var connection = await _connectionFactory.CreateConnectionAsync();
@@ -32,7 +32,9 @@ public class UserRepository : IUserRepository
             SET Name = @Name,
                 Email = @Email,
                 PasswordHash = @PasswordHash,
-                Role = @Role
+                Mobile = @Mobile,
+                Role = @Role,
+                IsActive = @IsActive
             WHERE Id = @Id;";
 
         using var connection = await _connectionFactory.CreateConnectionAsync();
@@ -53,11 +55,18 @@ public class UserRepository : IUserRepository
         await connection.ExecuteAsync(sql, new { Id = id });
     }
 
+    public async Task SetActiveStateAsync(int userId, bool isActive)
+    {
+        const string sql = "UPDATE Users SET IsActive = @IsActive WHERE Id = @UserId;";
+        using var connection = await _connectionFactory.CreateConnectionAsync();
+        await connection.ExecuteAsync(sql, new { UserId = userId, IsActive = isActive });
+    }
+
     public async Task<User?> GetByIdAsync(int id)
     {
-        const string sql = "SELECT * FROM Users WHERE CustomerID = @Id;";
+        const string sql = "SELECT * FROM Users WHERE Id = @Id;";
         using var connection = await _connectionFactory.CreateConnectionAsync();
-        return await connection.QuerySingleOrDefaultAsync<User>(sql, new { id = 4 });
+        return await connection.QuerySingleOrDefaultAsync<User>(sql, new { Id = id });
     }
 
     public async Task<User?> GetByEmailAsync(string email)
@@ -67,10 +76,15 @@ public class UserRepository : IUserRepository
         return await connection.QuerySingleOrDefaultAsync<User>(sql, new { Email = email });
     }
 
-    public async Task<IEnumerable<User>> GetAllAsync()
+    public async Task<IEnumerable<User>> GetAllAsync(bool includeInactive = false)
     {
-        const string sql = "SELECT * FROM Users ORDER BY FullName;";
+        const string sql = @"
+            SELECT *
+            FROM Users
+            WHERE (@IncludeInactive = 1 OR IsActive = 1)
+            ORDER BY Name;";
+
         using var connection = await _connectionFactory.CreateConnectionAsync();
-        return await connection.QueryAsync<User>(sql);
+        return await connection.QueryAsync<User>(sql, new { IncludeInactive = includeInactive });
     }
 }
