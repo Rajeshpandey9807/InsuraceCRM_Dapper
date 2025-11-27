@@ -25,7 +25,7 @@ public class AccountController : Controller
     {
         if (User.Identity?.IsAuthenticated ?? false)
         {
-            return RedirectToAction("Index", "Customer");
+            return RedirectToAction("Index", "Home");
         }
 
         ViewData["ReturnUrl"] = returnUrl;
@@ -105,6 +105,6 @@ public class AccountController : Controller
             return Redirect(returnUrl);
         }
 
-        return RedirectToAction("Index", "Customer");
+        return RedirectToAction("Index", "Home");
     }
 }
