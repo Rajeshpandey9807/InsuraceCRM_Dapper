@@ -45,12 +45,17 @@
 
 <div class="card shadow-sm border-0">
     <div class="card-header bg-white border-0">
-        <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div>
                 <h5 class="mb-0">Today's Reminder Details</h5>
                 <small class="text-muted">Detailed list of reminders scheduled for today.</small>
             </div>
-            <span class="badge bg-primary-subtle text-primary">@Model.TodaysReminderCount items</span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-primary-subtle text-primary">@Model.TodaysReminderCount items</span>
+                <a asp-controller="Reminder" asp-action="Today" class="btn btn-outline-primary btn-sm">
+                    View all
+                </a>
+            </div>
         </div>
     </div>
     <div class="card-body p-0">

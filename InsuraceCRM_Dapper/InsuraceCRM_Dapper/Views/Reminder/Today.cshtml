@@ -1,0 +1,59 @@
+@model InsuraceCRM_Dapper.ViewModels.ReminderListViewModel
+@using System.Linq
+
+@{
+    ViewData["Title"] = Model.Title;
+    var readableDate = Model.Date.ToLocalTime().ToString("dddd, dd MMM yyyy");
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">@Model.Title</h1>
+        <p class="text-muted mb-0">Showing all reminder items scheduled for @readableDate.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <span class="badge bg-primary-subtle text-primary align-self-center">@Model.Count items</span>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary btn-sm">Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        @if (Model.Reminders.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Customer</th>
+                            <th scope="col">Reminder Time</th>
+                            <th scope="col">Mobile</th>
+                            <th scope="col">Note</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var reminder in Model.Reminders.OrderBy(r => r.ReminderDateTime))
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">@reminder.CustomerName</div>
+                                <small class="text-muted">ID: @reminder.CustomerId</small>
+                            </td>
+                            <td>@reminder.ReminderDateTime.ToLocalTime().ToString("dd MMM yyyy - hh:mm tt")</td>
+                            <td>@(string.IsNullOrWhiteSpace(reminder.CustomerMobileNumber) ? "—" : reminder.CustomerMobileNumber)</td>
+                            <td class="text-break">@(string.IsNullOrWhiteSpace(reminder.Note) ? "—" : reminder.Note)</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="p-5 text-center text-muted">
+                <p class="h5 mb-2">No reminders scheduled today.</p>
+                <p class="mb-0">Plan follow-ups from the customer screen to populate this view.</p>
+            </div>
+        }
+    </div>
+</div>

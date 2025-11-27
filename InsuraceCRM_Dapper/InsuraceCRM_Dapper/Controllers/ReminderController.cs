@@ -11,10 +11,12 @@ namespace InsuraceCRM_Dapper.Controllers;
 public class ReminderController : Controller
 {
     private readonly IReminderService _reminderService;
+    private readonly IDashboardService _dashboardService;
 
-    public ReminderController(IReminderService reminderService)
+    public ReminderController(IReminderService reminderService, IDashboardService dashboardService)
     {
         _reminderService = reminderService;
+        _dashboardService = dashboardService;
     }
 
     [HttpGet]
@@ -52,6 +54,28 @@ public class ReminderController : Controller
 
         await _reminderService.MarkReminderAsShownAsync(reminderId);
         return Ok();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Today()
+    {
+        var userId = GetCurrentUserId();
+        var hasFullAccess = User.IsInRole("Admin") || User.IsInRole("Manager");
+
+        if (!hasFullAccess && userId is null)
+        {
+            return Forbid();
+        }
+
+        var reminders = await _dashboardService.GetTodaysReminderDetailsAsync(hasFullAccess ? null : userId);
+        var viewModel = new ReminderListViewModel
+        {
+            Title = hasFullAccess ? "All Today's Reminders" : "My Today's Reminders",
+            Date = DateTime.UtcNow,
+            Reminders = reminders
+        };
+
+        return View(viewModel);
     }
 
     private int? GetCurrentUserId()
