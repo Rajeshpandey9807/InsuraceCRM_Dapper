@@ -49,12 +49,26 @@ public class AccountController : Controller
             return View(viewModel);
         }
 
+        var role = "";
+        if (user.RoleId == 1)
+        {
+            role = "Admin";
+        }
+        else if (user.RoleId == 2)
+        {
+            role = "Manager";
+        }
+        else
+        {
+            role = "Employee";
+        }
+
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Name, user.Name),
             new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Role, user.Role),
+            new Claim(ClaimTypes.Role, role),
             new Claim("role", user.Role)
         };
 

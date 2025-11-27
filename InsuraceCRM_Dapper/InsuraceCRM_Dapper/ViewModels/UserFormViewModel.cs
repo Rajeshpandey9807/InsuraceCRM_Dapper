@@ -17,6 +17,8 @@ public class UserFormViewModel : IValidatableObject
     [Display(Name = "Mobile number")]
     public string? Mobile { get; set; }
 
+    public int RoleId { get; set; }
+
     [Required]
     public string Role { get; set; } = "Employee";
 

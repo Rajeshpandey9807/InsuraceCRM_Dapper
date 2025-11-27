@@ -56,7 +56,7 @@
                     @if (User.IsInRole("Admin"))
                     {
                         <a class="nav-link side-nav-link @(currentController == "Admin" && currentAction == "Users" ? "active" : string.Empty)" asp-controller="Admin" asp-action="Users" asp-fragment="create-user">Create User</a>
-                        <a class="nav-link side-nav-link @(currentController == "Admin" && currentAction == "Users" ? "active" : string.Empty)" asp-controller="Admin" asp-action="Users">Manage Users</a>
+                      @*   <a class="nav-link side-nav-link @(currentController == "Admin" && currentAction == "Users" ? "active" : string.Empty)" asp-controller="Admin" asp-action="Users">Manage Users</a> *@
                         <a class="nav-link side-nav-link @(currentController == "Admin" && currentAction == "ManageRoles" ? "active" : string.Empty)" asp-controller="Admin" asp-action="ManageRoles">Manage Roles</a>
                     }
                 </nav>
