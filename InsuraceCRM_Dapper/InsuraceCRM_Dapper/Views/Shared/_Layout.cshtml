@@ -55,7 +55,8 @@
                     <a class="nav-link side-nav-link @(currentController == "Reminder" ? "active" : string.Empty)" asp-controller="Reminder" asp-action="Today">Reminders</a>
                     @if (User.IsInRole("Admin"))
                     {
-                        <a class="nav-link side-nav-link @(currentController == "Admin" ? "active" : string.Empty)" asp-controller="Admin" asp-action="ManageRoles">Admin</a>
+                        <a class="nav-link side-nav-link @(currentController == "Admin" && currentAction == "Users" ? "active" : string.Empty)" asp-controller="Admin" asp-action="Users">Manage Users</a>
+                        <a class="nav-link side-nav-link @(currentController == "Admin" && currentAction == "ManageRoles" ? "active" : string.Empty)" asp-controller="Admin" asp-action="ManageRoles">Manage Roles</a>
                     }
                 </nav>
             </aside>
