@@ -49,13 +49,17 @@ public class AccountController : Controller
             return View(viewModel);
         }
 
+        var role = string.IsNullOrWhiteSpace(user.Role)
+            ? "Employee"
+            : user.Role;
+
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Name, user.Name),
             new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Role, user.Role),
-            new Claim("role", user.Role)
+            new Claim(ClaimTypes.Role, role),
+            new Claim("role", role)
         };
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
