@@ -21,7 +21,7 @@ public class FollowUpService : IFollowUpService
     {
         var followUpId = await _followUpRepository.InsertAsync(followUp);
 
-        if (followUp.NextReminderDateTime.HasValue)
+        if (followUp.ReminderRequired && followUp.NextReminderDateTime.HasValue)
         {
             var reminder = new Reminder
             {

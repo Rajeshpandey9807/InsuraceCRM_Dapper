@@ -23,9 +23,15 @@
                     <thead>
                         <tr>
                             <th>Date</th>
-                            <th>Status</th>
-                            <th>Note</th>
-                            <th>Next Reminder</th>
+                            <th>Insurance Type</th>
+                            <th>Budget</th>
+                            <th>Existing Policy</th>
+                            <th>Call Status</th>
+                            <th>Notes</th>
+                            <th>Next Follow-Up</th>
+                            <th>Reminder Required</th>
+                            <th>Converted</th>
+                            <th>Reason</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -34,9 +40,25 @@
                         {
                             <tr>
                                 <td>@followUp.FollowUpDate.ToString("yyyy-MM-dd")</td>
-                                <td>@followUp.FollowUpStatus</td>
-                                <td>@followUp.FollowUpNote</td>
+                                <td>@(string.IsNullOrWhiteSpace(followUp.InsuranceType) ? "-" : followUp.InsuranceType)</td>
+                                <td>@(followUp.Budget.HasValue ? followUp.Budget.Value.ToString("N2") : "-")</td>
+                                <td>@(followUp.HasExistingPolicy ? "Yes" : "No")</td>
+                                <td>@(string.IsNullOrWhiteSpace(followUp.FollowUpStatus) ? "-" : followUp.FollowUpStatus)</td>
+                                <td>@(string.IsNullOrWhiteSpace(followUp.FollowUpNote) ? "-" : followUp.FollowUpNote)</td>
                                 <td>@followUp.NextReminderDateTime?.ToString("g")</td>
+                                <td>@(followUp.ReminderRequired ? "Yes" : "No")</td>
+                                <td>
+                                    @{
+                                        var conversionText = followUp.IsConverted switch
+                                        {
+                                            true => "Yes",
+                                            false => "No",
+                                            _ => "Pending"
+                                        };
+                                    }
+                                    @conversionText
+                                </td>
+                                <td>@(string.IsNullOrWhiteSpace(followUp.ConversionReason) ? "-" : followUp.ConversionReason)</td>
                                 <td class="text-end">
                                     <a asp-action="Edit" asp-route-id="@followUp.Id" class="btn btn-sm btn-secondary">Edit</a>
                                 </td>

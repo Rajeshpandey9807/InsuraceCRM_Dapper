@@ -17,8 +17,30 @@ public class FollowUpRepository : IFollowUpRepository
     public async Task<int> InsertAsync(FollowUp followUp)
     {
         const string sql = @"
-            INSERT INTO FollowUps (CustomerId, FollowUpDate, FollowUpNote, FollowUpStatus, NextReminderDateTime)
-            VALUES (@CustomerId, @FollowUpDate, @FollowUpNote, @FollowUpStatus, @NextReminderDateTime);
+            INSERT INTO FollowUps (
+                CustomerId,
+                FollowUpDate,
+                InsuranceType,
+                Budget,
+                HasExistingPolicy,
+                FollowUpNote,
+                FollowUpStatus,
+                NextReminderDateTime,
+                ReminderRequired,
+                IsConverted,
+                ConversionReason)
+            VALUES (
+                @CustomerId,
+                @FollowUpDate,
+                @InsuranceType,
+                @Budget,
+                @HasExistingPolicy,
+                @FollowUpNote,
+                @FollowUpStatus,
+                @NextReminderDateTime,
+                @ReminderRequired,
+                @IsConverted,
+                @ConversionReason);
             SELECT CAST(SCOPE_IDENTITY() as int);";
 
         using var connection = await _connectionFactory.CreateConnectionAsync();
@@ -30,9 +52,15 @@ public class FollowUpRepository : IFollowUpRepository
         const string sql = @"
             UPDATE FollowUps
             SET FollowUpDate = @FollowUpDate,
+                InsuranceType = @InsuranceType,
+                Budget = @Budget,
+                HasExistingPolicy = @HasExistingPolicy,
                 FollowUpNote = @FollowUpNote,
                 FollowUpStatus = @FollowUpStatus,
-                NextReminderDateTime = @NextReminderDateTime
+                NextReminderDateTime = @NextReminderDateTime,
+                ReminderRequired = @ReminderRequired,
+                IsConverted = @IsConverted,
+                ConversionReason = @ConversionReason
             WHERE Id = @Id;";
 
         using var connection = await _connectionFactory.CreateConnectionAsync();

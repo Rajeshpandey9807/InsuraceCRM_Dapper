@@ -43,6 +43,9 @@ public class FollowUpController : Controller
         {
             CustomerId = customer.Id,
             CustomerName = customer.Name,
+            CustomerMobileNumber = customer.MobileNumber,
+            CustomerLocation = customer.Location,
+            InsuranceType = customer.InsuranceType ?? string.Empty,
             FollowUpDate = DateTime.UtcNow.Date
         };
 
@@ -68,6 +71,8 @@ public class FollowUpController : Controller
         if (!ModelState.IsValid)
         {
             viewModel.CustomerName = customer.Name;
+            viewModel.CustomerMobileNumber = customer.MobileNumber;
+            viewModel.CustomerLocation = customer.Location;
             return View(viewModel);
         }
 
@@ -128,6 +133,8 @@ public class FollowUpController : Controller
         if (!ModelState.IsValid)
         {
             viewModel.CustomerName = customer.Name;
+            viewModel.CustomerMobileNumber = customer.MobileNumber;
+            viewModel.CustomerLocation = customer.Location;
             return View(viewModel);
         }
 
@@ -166,9 +173,15 @@ public class FollowUpController : Controller
         Id = viewModel.Id,
         CustomerId = viewModel.CustomerId,
         FollowUpDate = viewModel.FollowUpDate,
+        InsuranceType = viewModel.InsuranceType,
+        Budget = viewModel.Budget,
+        HasExistingPolicy = viewModel.HasExistingPolicy,
         FollowUpNote = viewModel.FollowUpNote,
         FollowUpStatus = viewModel.FollowUpStatus,
-        NextReminderDateTime = viewModel.NextReminderDateTime
+        NextReminderDateTime = viewModel.ReminderRequired ? viewModel.NextReminderDateTime : null,
+        ReminderRequired = viewModel.ReminderRequired,
+        IsConverted = viewModel.IsConverted,
+        ConversionReason = viewModel.ConversionReason
     };
 
     private static FollowUpFormViewModel MapToViewModel(FollowUp followUp, Customer customer) => new()
@@ -176,10 +189,18 @@ public class FollowUpController : Controller
         Id = followUp.Id,
         CustomerId = followUp.CustomerId,
         CustomerName = customer.Name,
+        CustomerMobileNumber = customer.MobileNumber,
+        CustomerLocation = customer.Location,
         FollowUpDate = followUp.FollowUpDate,
-        FollowUpStatus = followUp.FollowUpStatus,
+        InsuranceType = followUp.InsuranceType ?? string.Empty,
+        Budget = followUp.Budget,
+        HasExistingPolicy = followUp.HasExistingPolicy,
+        FollowUpStatus = followUp.FollowUpStatus ?? string.Empty,
         FollowUpNote = followUp.FollowUpNote,
-        NextReminderDateTime = followUp.NextReminderDateTime
+        NextReminderDateTime = followUp.NextReminderDateTime,
+        ReminderRequired = followUp.ReminderRequired,
+        IsConverted = followUp.IsConverted,
+        ConversionReason = followUp.ConversionReason
     };
 
     private async Task<User?> GetCurrentUserAsync()
