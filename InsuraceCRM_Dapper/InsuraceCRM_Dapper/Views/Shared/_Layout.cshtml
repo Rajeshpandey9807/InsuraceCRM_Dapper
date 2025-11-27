@@ -7,63 +7,65 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-controller="Customer" asp-action="Index">Insurance CRM</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="mainNavbar">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        @if (User.Identity?.IsAuthenticated ?? false)
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Home" asp-action="Index">Dashboard</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Customer" asp-action="Index">Customers</a>
-                            </li>
-                            if (User.IsInRole("Admin"))
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Admin" asp-action="ManageRoles">Admin</a>
-                                </li>
-                            }
-                        }
-                    </ul>
-                    <ul class="navbar-nav ms-auto">
-                        @if (User.Identity?.IsAuthenticated ?? false)
-                        {
-                            <li class="nav-item">
-                                <span class="navbar-text text-white me-3">@User.Identity?.Name (@User.FindFirst("role")?.Value)</span>
-                            </li>
-                            <li class="nav-item">
-                                <form class="d-inline" asp-controller="Account" asp-action="Logout" method="post">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-sm btn-outline-light">Logout</button>
-                                </form>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item">
-                                <a class="btn btn-sm btn-outline-light" asp-controller="Account" asp-action="Login">Login</a>
-                            </li>
-                        }
-                    </ul>
-                </div>
+@{
+    var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+}
+<body class="@(isAuthenticated ? "has-side-nav" : string.Empty)">
+    <header class="top-bar navbar navbar-dark bg-primary shadow-sm">
+        <div class="container-fluid d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                @if (isAuthenticated)
+                {
+                    <button class="navbar-toggler side-nav-toggle" type="button" id="sideNavToggle" aria-label="Toggle navigation" aria-controls="sideNav" aria-expanded="true">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                }
+                <a class="navbar-brand mb-0" asp-controller="Customer" asp-action="Index">Insurance CRM</a>
             </div>
-        </nav>
+            <div class="d-flex align-items-center gap-3">
+                @if (isAuthenticated)
+                {
+                    <span class="navbar-text text-white small">@User.Identity?.Name (@User.FindFirst("role")?.Value)</span>
+                    <form class="d-inline" asp-controller="Account" asp-action="Logout" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-outline-light">Logout</button>
+                    </form>
+                }
+                else
+                {
+                    <a class="btn btn-sm btn-outline-light" asp-controller="Account" asp-action="Login">Login</a>
+                }
+            </div>
+        </div>
     </header>
-    <div class="container py-4">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
+    <div class="app-shell @(isAuthenticated ? "with-side-nav" : "without-side-nav")">
+        @if (isAuthenticated)
+        {
+            <aside id="sideNav" class="side-nav">
+                <div class="side-nav__title text-uppercase text-white-50">Navigation</div>
+                <nav class="nav flex-column mt-3">
+                    <a class="nav-link side-nav-link @(currentController == "Home" ? "active" : string.Empty)" asp-controller="Home" asp-action="Index">Dashboard</a>
+                    <a class="nav-link side-nav-link @(currentController == "Customer" ? "active" : string.Empty)" asp-controller="Customer" asp-action="Index">Customers</a>
+                    <a class="nav-link side-nav-link @(currentController == "Reminder" ? "active" : string.Empty)" asp-controller="Reminder" asp-action="Today">Reminders</a>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a class="nav-link side-nav-link @(currentController == "Admin" ? "active" : string.Empty)" asp-controller="Admin" asp-action="ManageRoles">Admin</a>
+                    }
+                </nav>
+            </aside>
+            <div class="side-nav-overlay" id="sideNavOverlay" aria-hidden="true"></div>
+        }
+        <div class="content-area">
+            <div class="content-inner container-fluid py-4">
+                <main role="main" class="pb-3">
+                    @RenderBody()
+                </main>
+            </div>
+        </div>
     </div>
 
-    @if (User.Identity?.IsAuthenticated ?? false)
+    @if (isAuthenticated)
     {
         <partial name="_ReminderModal" />
         <form asp-controller="Account" asp-action="Logout" method="post" class="d-none" id="antiForgeryForm">
