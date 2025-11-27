@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Dapper;
 using InsuraceCRM_Dapper.Data;
 using InsuraceCRM_Dapper.Interfaces.Repositories;
@@ -81,5 +82,16 @@ public class CustomerRepository : ICustomerRepository
 
         using var connection = await _connectionFactory.CreateConnectionAsync();
         await connection.ExecuteAsync(sql, new { EmployeeId = employeeId, CustomerId = customerId });
+    }
+
+    public async Task AssignCustomersAsync(IEnumerable<int> customerIds, int employeeId)
+    {
+        const string sql = @"
+            UPDATE Customers
+            SET AssignedEmployeeId = @EmployeeId
+            WHERE Id IN @CustomerIds;";
+
+        using var connection = await _connectionFactory.CreateConnectionAsync();
+        await connection.ExecuteAsync(sql, new { EmployeeId = employeeId, CustomerIds = customerIds });
     }
 }

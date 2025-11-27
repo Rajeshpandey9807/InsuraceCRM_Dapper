@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using InsuraceCRM_Dapper.Models;
 
 namespace InsuraceCRM_Dapper.Interfaces.Repositories;
@@ -11,4 +12,5 @@ public interface ICustomerRepository
     Task<IEnumerable<Customer>> GetAllAsync();
     Task<IEnumerable<Customer>> GetCustomersByEmployeeAsync(int employeeId);
     Task AssignCustomerAsync(int customerId, int employeeId);
+    Task AssignCustomersAsync(IEnumerable<int> customerIds, int employeeId);
 }
