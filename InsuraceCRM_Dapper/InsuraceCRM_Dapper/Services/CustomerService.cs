@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using InsuraceCRM_Dapper.Interfaces.Repositories;
 using InsuraceCRM_Dapper.Interfaces.Services;
 using InsuraceCRM_Dapper.Models;
@@ -54,5 +56,25 @@ public class CustomerService : ICustomerService
     public async Task AssignCustomerAsync(int customerId, int employeeId)
     {
         await _customerRepository.AssignCustomerAsync(customerId, employeeId);
+    }
+
+    public async Task AssignCustomersAsync(IEnumerable<int> customerIds, int employeeId)
+    {
+        if (customerIds is null)
+        {
+            return;
+        }
+
+        var ids = customerIds
+            .Where(id => id > 0)
+            .Distinct()
+            .ToArray();
+
+        if (ids.Length == 0)
+        {
+            return;
+        }
+
+        await _customerRepository.AssignCustomersAsync(ids, employeeId);
     }
 }
