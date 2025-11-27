@@ -50,11 +50,12 @@
                     <a class="nav-link side-nav-link @(currentController == "Customer" && currentAction != "BulkAssign" ? "active" : string.Empty)" asp-controller="Customer" asp-action="Index">Customers</a>
                     @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
                     {
-                        <a class="nav-link side-nav-link @(currentController == "Customer" && currentAction == "BulkAssign" ? "active" : string.Empty)" asp-controller="Customer" asp-action="BulkAssign">Bulk Assign</a>
+                        <a class="nav-link side-nav-link @(currentController == "Customer" && currentAction == "BulkAssign" ? "active" : string.Empty)" asp-controller="Customer" asp-action="BulkAssign">Bulk Assignment</a>
                     }
                     <a class="nav-link side-nav-link @(currentController == "Reminder" ? "active" : string.Empty)" asp-controller="Reminder" asp-action="Today">Reminders</a>
                     @if (User.IsInRole("Admin"))
                     {
+                        <a class="nav-link side-nav-link @(currentController == "Admin" && currentAction == "Users" ? "active" : string.Empty)" asp-controller="Admin" asp-action="Users" asp-fragment="create-user">Create User</a>
                         <a class="nav-link side-nav-link @(currentController == "Admin" && currentAction == "Users" ? "active" : string.Empty)" asp-controller="Admin" asp-action="Users">Manage Users</a>
                         <a class="nav-link side-nav-link @(currentController == "Admin" && currentAction == "ManageRoles" ? "active" : string.Empty)" asp-controller="Admin" asp-action="ManageRoles">Manage Roles</a>
                     }
