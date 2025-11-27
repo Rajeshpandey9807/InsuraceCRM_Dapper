@@ -23,13 +23,13 @@ public class DashboardService : IDashboardService
 
         //await Task.WhenAll(remindersTask, callCountTask, assignedCustomerCountTask);
 
-        var reminders = MapReminders(remindersTask.Result);
+        var reminders = MapReminders(remindersTask);
 
         return new DashboardViewModel
         {
             TodaysReminderCount = reminders.Count,
-            TodaysCallCount = callCountTask.Result,
-            AssignedCustomerCount = assignedCustomerCountTask.Result,
+            TodaysCallCount = 10,
+            AssignedCustomerCount = 20,
             TodaysReminders = reminders
         };
     }
@@ -52,13 +52,4 @@ public class DashboardService : IDashboardService
                 CustomerMobileNumber = r.CustomerMobileNumber
             })
             .ToList();
-
-        return new DashboardViewModel
-        {
-            TodaysReminderCount = reminders.Count,
-            TodaysCallCount =10, //callCountTask.Result,
-            AssignedCustomerCount =20, //assignedCustomerCountTask.Result,
-            TodaysReminders = reminders
-        };
     }
-}
