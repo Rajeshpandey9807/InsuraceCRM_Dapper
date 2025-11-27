@@ -20,6 +20,9 @@
                         @if (User.Identity?.IsAuthenticated ?? false)
                         {
                             <li class="nav-item">
+                                <a class="nav-link" asp-controller="Home" asp-action="Index">Dashboard</a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link" asp-controller="Customer" asp-action="Index">Customers</a>
                             </li>
                             if (User.IsInRole("Admin"))

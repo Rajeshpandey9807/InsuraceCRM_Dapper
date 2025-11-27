@@ -1,8 +1,96 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@model InsuraceCRM_Dapper.ViewModels.DashboardViewModel
+@using System.Linq
+
+@{
+    ViewData["Title"] ??= "Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Dashboard</h1>
+        <p class="text-muted mb-0">Snapshot of today's reminders, calls, and assignments.</p>
+    </div>
+    <span class="badge bg-light text-dark">Updated: @DateTime.UtcNow.ToLocalTime():g</span>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100 border-0">
+            <div class="card-body">
+                <p class="text-uppercase text-muted fw-semibold mb-1">Today's Reminders</p>
+                <h2 class="fw-bold">@Model.TodaysReminderCount</h2>
+                <p class="text-muted mb-0">Scheduled reminder items for today.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100 border-0">
+            <div class="card-body">
+                <p class="text-uppercase text-muted fw-semibold mb-1">Calls Logged Today</p>
+                <h2 class="fw-bold">@Model.TodaysCallCount</h2>
+                <p class="text-muted mb-0">Follow-ups captured with a call date of today.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100 border-0">
+            <div class="card-body">
+                <p class="text-uppercase text-muted fw-semibold mb-1">Assigned Customers</p>
+                <h2 class="fw-bold">@Model.AssignedCustomerCount</h2>
+                <p class="text-muted mb-0">Customers currently assigned to you.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white border-0">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h5 class="mb-0">Today's Reminder Details</h5>
+                <small class="text-muted">Detailed list of reminders scheduled for today.</small>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-primary-subtle text-primary">@Model.TodaysReminderCount items</span>
+                <a asp-controller="Reminder" asp-action="Today" class="btn btn-outline-primary btn-sm">
+                    View all
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        @if (Model.TodaysReminders.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Customer</th>
+                            <th>Reminder Time</th>
+                            <th>Mobile</th>
+                            <th>Note</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var reminder in Model.TodaysReminders)
+                    {
+                        <tr>
+                            <td>@reminder.CustomerName</td>
+                            <td>@reminder.ReminderDateTime.ToLocalTime().ToString("dd MMM yyyy - hh:mm tt")</td>
+                            <td>@reminder.CustomerMobileNumber</td>
+                            <td>@(string.IsNullOrWhiteSpace(reminder.Note) ? "—" : reminder.Note)</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="p-4 text-center text-muted">
+                <p class="mb-1 fw-semibold">No reminders scheduled for today.</p>
+                <p class="mb-0">Enjoy the day or schedule a reminder from the follow-up screen.</p>
+            </div>
+        }
+    </div>
 </div>
