@@ -1,5 +1,6 @@
 using InsuraceCRM_Dapper.Interfaces.Repositories;
 using InsuraceCRM_Dapper.Interfaces.Services;
+using InsuraceCRM_Dapper.Models;
 using InsuraceCRM_Dapper.ViewModels;
 using System.Linq;
 
@@ -22,7 +23,25 @@ public class DashboardService : IDashboardService
 
         await Task.WhenAll(remindersTask, callCountTask, assignedCustomerCountTask);
 
-        var reminders = remindersTask.Result
+        var reminders = MapReminders(remindersTask.Result);
+
+        return new DashboardViewModel
+        {
+            TodaysReminderCount = reminders.Count,
+            TodaysCallCount = callCountTask.Result,
+            AssignedCustomerCount = assignedCustomerCountTask.Result,
+            TodaysReminders = reminders
+        };
+    }
+
+    public async Task<IReadOnlyCollection<ReminderViewModel>> GetTodaysReminderDetailsAsync(int? employeeId)
+    {
+        var reminders = await _dashboardRepository.GetTodaysRemindersAsync(employeeId);
+        return MapReminders(reminders);
+    }
+
+    private static IReadOnlyCollection<ReminderViewModel> MapReminders(IEnumerable<Reminder> reminders) =>
+        reminders
             .Select(r => new ReminderViewModel
             {
                 Id = r.Id,
@@ -33,13 +52,4 @@ public class DashboardService : IDashboardService
                 CustomerMobileNumber = r.CustomerMobileNumber
             })
             .ToList();
-
-        return new DashboardViewModel
-        {
-            TodaysReminderCount = reminders.Count,
-            TodaysCallCount = callCountTask.Result,
-            AssignedCustomerCount = assignedCustomerCountTask.Result,
-            TodaysReminders = reminders
-        };
-    }
 }
