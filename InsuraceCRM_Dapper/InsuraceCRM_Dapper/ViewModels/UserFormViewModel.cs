@@ -20,6 +20,8 @@ public class UserFormViewModel : IValidatableObject
     [Required]
     public string Role { get; set; } = "Employee";
 
+    public int RoleId { get; set; }
+
     [DataType(DataType.Password)]
     [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be at least 6 characters.")]
     public string? Password { get; set; }

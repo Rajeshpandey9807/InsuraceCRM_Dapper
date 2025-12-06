@@ -33,6 +33,10 @@ public class UserService : IUserService
 
     public Task<User?> GetByIdAsync(int id) => _userRepository.GetByIdAsync(id);
 
+    public async Task<IEnumerable<Role>> GetRolesAsync()
+    {
+        return await _userRepository.GetRolesAsync();
+    }
     public async Task<int> CreateUserAsync(User user, string password)
     {
         user.PasswordHash = _passwordHasher.HashPassword(user, password);
@@ -48,10 +52,11 @@ public class UserService : IUserService
             throw new KeyNotFoundException($"User with id {user.Id} was not found.");
         }
 
-        existingUser.Name = user.Name;
+        existingUser.FullName = user.FullName;
         existingUser.Email = user.Email;
         existingUser.Mobile = user.Mobile;
         existingUser.Role = user.Role;
+        existingUser.RoleId = user.RoleId;
         existingUser.IsActive = user.IsActive;
 
         if (!string.IsNullOrWhiteSpace(newPassword))
@@ -83,7 +88,7 @@ public class UserService : IUserService
 
         var adminUser = new User
         {
-            Name = "System Administrator",
+            FullName = "System Administrator",
             Email = adminEmail,
             Role = "Admin",
             Mobile = string.Empty,

@@ -31,7 +31,7 @@ public class CustomerController : Controller
 
         var customers = (await _customerService.GetCustomersForUserAsync(currentUser)).ToList();
         var userLookup = (await _userService.GetAllUsersAsync(includeInactive: true))
-            .ToDictionary(u => u.Id, u => u.Name);
+            .ToDictionary(u => u.Id, u => u.FullName);
 
         foreach (var customer in customers)
         {
@@ -183,7 +183,7 @@ public class CustomerController : Controller
         await _customerService.AssignCustomersAsync(selectedCustomerIds, viewModel.SelectedEmployeeId.Value);
 
         var employee = await _userService.GetByIdAsync(viewModel.SelectedEmployeeId.Value);
-        var employeeName = employee?.Name ?? "selected employee";
+        var employeeName = employee?.FullName ?? "selected employee";
         TempData["CustomerSuccess"] = $"{selectedCustomerIds.Count} customer(s) assigned to {employeeName}.";
 
         return RedirectToAction(nameof(Index));
@@ -196,7 +196,7 @@ public class CustomerController : Controller
         var customers = (await _customerService.GetAllCustomersAsync()).ToList();
         var allUsers = (await _userService.GetAllUsersAsync(includeInactive: true)).ToList();
 
-        var userLookup = allUsers.ToDictionary(u => u.Id, u => u.Name);
+        var userLookup = allUsers.ToDictionary(u => u.Id, u => u.FullName);
         foreach (var customer in customers)
         {
             if (customer.AssignedEmployeeId.HasValue &&
@@ -208,7 +208,7 @@ public class CustomerController : Controller
 
         var employees = allUsers
             .Where(u => u.IsActive && u.Role.Equals("Employee", StringComparison.OrdinalIgnoreCase))
-            .OrderBy(u => u.Name)
+            .OrderBy(u => u.FullName)
             .ToList();
 
         var selectedIds = selectedCustomerIds?

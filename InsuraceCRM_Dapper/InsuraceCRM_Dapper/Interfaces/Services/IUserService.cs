@@ -12,4 +12,5 @@ public interface IUserService
     Task UpdateRoleAsync(int userId, string role);
     Task SetActiveStateAsync(int userId, bool isActive);
     Task EnsureDefaultAdminAsync();
+    Task<IEnumerable<Role>> GetRolesAsync();
 }

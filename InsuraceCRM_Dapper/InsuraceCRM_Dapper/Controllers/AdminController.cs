@@ -46,7 +46,10 @@ public class AdminController : Controller
 
     public async Task<IActionResult> Users()
     {
+        var Roles = await _userService.GetRolesAsync();
+
         var viewModel = await BuildManageUsersViewModel();
+        viewModel.Role = Roles;
         return View(viewModel);
     }
 
@@ -54,6 +57,7 @@ public class AdminController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateUser([Bind(Prefix = "NewUser")] UserFormViewModel viewModel)
     {
+
         if (!AllowedRoles.Contains(viewModel.Role))
         {
             ModelState.AddModelError("NewUser.Role", "Invalid role selection.");
@@ -66,21 +70,24 @@ public class AdminController : Controller
 
         var user = new User
         {
-            Name = viewModel.Name,
+            FullName = viewModel.Name,
             Email = viewModel.Email,
             Mobile = viewModel.Mobile,
             Role = viewModel.Role,
+            RoleId = viewModel.RoleId,
             IsActive = true
         };
 
         await _userService.CreateUserAsync(user, viewModel.Password!);
-        TempData["UserMessage"] = $"User '{user.Name}' was created.";
+        TempData["UserMessage"] = $"User '{user.FullName}' was created.";
         return RedirectToAction(nameof(Users));
     }
 
     [HttpGet]
     public async Task<IActionResult> EditUser(int id)
     {
+
+
         var user = await _userService.GetByIdAsync(id);
         if (user is null)
         {
@@ -92,13 +99,14 @@ public class AdminController : Controller
             Form = new UserFormViewModel
             {
                 Id = user.Id,
-                Name = user.Name,
+                Name = user.FullName,
                 Email = user.Email,
                 Mobile = user.Mobile,
                 Role = user.Role,
+                RoleId = user.RoleId,
                 IsActive = user.IsActive
             },
-            Roles = AllowedRoles
+            Roles = await _userService.GetRolesAsync()
         };
 
         return View(viewModel);
@@ -120,18 +128,19 @@ public class AdminController : Controller
 
         if (!ModelState.IsValid)
         {
-            viewModel.Roles = AllowedRoles;
+            viewModel.Roles = await _userService.GetRolesAsync();
             return View(viewModel);
         }
 
         var user = new User
         {
             Id = viewModel.Form.Id.Value,
-            Name = viewModel.Form.Name,
+            FullName = viewModel.Form.Name,
             Email = viewModel.Form.Email,
             Mobile = viewModel.Form.Mobile,
-            Role = viewModel.Form.Role,
-            IsActive = viewModel.Form.IsActive
+            //Role = viewModel.Form.Role,
+            IsActive = viewModel.Form.IsActive,
+            RoleId = viewModel.Form.RoleId
         };
 
         var password = string.IsNullOrWhiteSpace(viewModel.Form.Password)
@@ -139,7 +148,7 @@ public class AdminController : Controller
             : viewModel.Form.Password;
 
         await _userService.UpdateUserAsync(user, password);
-        TempData["UserMessage"] = $"User '{user.Name}' was updated.";
+        TempData["UserMessage"] = $"User '{user.FullName}' was updated.";
         return RedirectToAction(nameof(Users));
     }
 
@@ -157,7 +166,7 @@ public class AdminController : Controller
         var users = await _userService.GetAllUsersAsync(includeInactive: true);
         return new ManageUsersViewModel
         {
-            Users = users.OrderBy(u => u.Name),
+            Users = users.OrderBy(u => u.FullName),
             NewUser = form ?? new UserFormViewModel(),
             Roles = AllowedRoles
         };

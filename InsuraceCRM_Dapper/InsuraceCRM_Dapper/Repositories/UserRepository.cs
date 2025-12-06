@@ -13,27 +13,35 @@ public class UserRepository : IUserRepository
     {
         _connectionFactory = connectionFactory;
     }
-
     public async Task<int> InsertAsync(User user)
     {
-        const string sql = @"
-            INSERT INTO Users (Name, Email, PasswordHash, Mobile, Role, IsActive)
-            VALUES (@Name, @Email, @PasswordHash, @Mobile, @Role, @IsActive);
+        //const string sql = @"
+        //    INSERT INTO Users (Name, Email, PasswordHash, Mobile, Role, IsActive)
+        //    VALUES (@Name, @Email, @PasswordHash, @Mobile, @Role, @IsActive);
+        //    SELECT CAST(SCOPE_IDENTITY() as int);";
+        const string sql = @"INSERT INTO Users (FullName, Email, PasswordHash, Mobile, RoleId, IsActive)
+            VALUES (@FullName, @Email, @PasswordHash, @Mobile, @RoleId, @IsActive)           
             SELECT CAST(SCOPE_IDENTITY() as int);";
 
         using var connection = await _connectionFactory.CreateConnectionAsync();
         return await connection.ExecuteScalarAsync<int>(sql, user);
     }
 
+    public async Task<IEnumerable<Role>> GetRolesAsync()
+    {
+        const string sql = "select RoleId,RoleName from Roles";
+        using var connection = await _connectionFactory.CreateConnectionAsync();
+        return await connection.QueryAsync<Role>(sql).ContinueWith(t => t.Result.ToList());
+    }
     public async Task UpdateAsync(User user)
     {
         const string sql = @"
             UPDATE Users
-            SET Name = @Name,
+            SET FullName = @FullName,
                 Email = @Email,
                 PasswordHash = @PasswordHash,
                 Mobile = @Mobile,
-                Role = @Role,
+                RoleId=@RoleId,
                 IsActive = @IsActive
             WHERE Id = @Id;";
 
@@ -71,9 +79,10 @@ public class UserRepository : IUserRepository
 
     public async Task<User?> GetByEmailAsync(string email)
     {
-        const string sql = "SELECT * FROM Users WHERE Email = @Email;";
+        const string sql = "SELECT u.*,r.RoleName as Role FROM Users u inner join Roles R\r\non u.roleId=R.RoleId WHERE u.Email = @Email;";
         using var connection = await _connectionFactory.CreateConnectionAsync();
-        return await connection.QuerySingleOrDefaultAsync<User>(sql, new { Email = email });
+        var result = await connection.QuerySingleOrDefaultAsync<User>(sql, new { Email = email });
+        return result;
     }
 
     public async Task<IEnumerable<User>> GetAllAsync(bool includeInactive = false)
@@ -81,8 +90,8 @@ public class UserRepository : IUserRepository
         const string sql = @"
             SELECT *
             FROM Users
-            WHERE (@IncludeInactive = 1 OR IsActive = 1)
-            ORDER BY Name;";
+            WHERE IsActive = 1
+            ORDER BY FullName;";
 
         using var connection = await _connectionFactory.CreateConnectionAsync();
         return await connection.QueryAsync<User>(sql, new { IncludeInactive = includeInactive });

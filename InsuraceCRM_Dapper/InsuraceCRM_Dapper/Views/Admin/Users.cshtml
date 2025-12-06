@@ -48,7 +48,7 @@
                         <span asp-validation-for="NewUser.Mobile" class="text-danger"></span>
                     </div>
 
-                    <div class="mb-3">
+                  @*   <div class="mb-3">
                         <label asp-for="NewUser.Role" class="form-label"></label>
                         <select asp-for="NewUser.Role" class="form-select">
                             @foreach (var role in Model.Roles)
@@ -57,7 +57,23 @@
                             }
                         </select>
                         <span asp-validation-for="NewUser.Role" class="text-danger"></span>
-                    </div>
+                    </div> *@
+                  <div class="mb-3">
+    <label asp-for="NewUser.RoleId" class="form-label"></label>
+
+    <select asp-for="NewUser.RoleId"
+            asp-items="Model.Role.Select(r => new SelectListItem {
+                Value = r.RoleId.ToString(),
+                Text = r.RoleName
+            })"
+            class="form-control">
+
+        <option value="">-- Select Role --</option>
+    </select>
+
+    <span asp-validation-for="NewUser.RoleId" class="text-danger"></span>
+</div>
+
 
                     <div class="mb-3">
                         <label asp-for="NewUser.Password" class="form-label"></label>
@@ -107,7 +123,7 @@
                                 {
                                     <tr>
                                         <td>
-                                            <div class="fw-semibold">@user.Name</div>
+                                            <div class="fw-semibold">@user.FullName</div>
                                             <div class="text-muted small">@user.Mobile</div>
                                         </td>
                                         <td>@user.Email</td>
