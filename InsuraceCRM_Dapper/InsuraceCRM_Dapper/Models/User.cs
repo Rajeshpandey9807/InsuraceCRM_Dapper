@@ -19,6 +19,8 @@ public class User
     [Display(Name = "Mobile number")]
     public string? Mobile { get; set; }
 
+    public int RoleId { get; set; } 
+
     [Required, StringLength(50)]
     public string Role { get; set; } = "Employee";
 

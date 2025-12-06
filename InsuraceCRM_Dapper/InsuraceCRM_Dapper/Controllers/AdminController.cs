@@ -96,7 +96,8 @@ public class AdminController : Controller
                 Email = user.Email,
                 Mobile = user.Mobile,
                 Role = user.Role,
-                IsActive = user.IsActive
+                IsActive = user.IsActive,
+                RoleId=user.RoleId
             },
             Roles = AllowedRoles
         };
@@ -131,7 +132,8 @@ public class AdminController : Controller
             Email = viewModel.Form.Email,
             Mobile = viewModel.Form.Mobile,
             Role = viewModel.Form.Role,
-            IsActive = viewModel.Form.IsActive
+            IsActive = viewModel.Form.IsActive,
+            RoleId=viewModel.Form.RoleId
         };
 
         var password = string.IsNullOrWhiteSpace(viewModel.Form.Password)

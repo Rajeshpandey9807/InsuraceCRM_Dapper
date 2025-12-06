@@ -36,7 +36,7 @@ public class AccountController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginViewModel viewModel, string? returnUrl = null)
-    {
+        {
         if (!ModelState.IsValid)
         {
             return View(viewModel);
