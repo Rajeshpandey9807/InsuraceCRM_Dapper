@@ -17,19 +17,19 @@ public class DashboardService : IDashboardService
 
     public async Task<DashboardViewModel> GetDashboardAsync(int? employeeId)
     {
-        var remindersTask = _dashboardRepository.GetTodaysRemindersAsync(employeeId);
-        var callCountTask = _dashboardRepository.GetTodaysCallCountAsync(employeeId);
-        var assignedCustomerCountTask = _dashboardRepository.GetAssignedCustomerCountAsync(employeeId);
+        var remindersTask = await _dashboardRepository.GetTodaysRemindersAsync(employeeId);
+        //var callCountTask = _dashboardRepository.GetTodaysCallCountAsync(employeeId);
+        //var assignedCustomerCountTask = _dashboardRepository.GetAssignedCustomerCountAsync(employeeId);
 
-        await Task.WhenAll(remindersTask, callCountTask, assignedCustomerCountTask);
+        //await Task.WhenAll(remindersTask, callCountTask, assignedCustomerCountTask);
 
-        var reminders = MapReminders(remindersTask.Result);
+        var reminders = MapReminders(remindersTask);
 
         return new DashboardViewModel
         {
             TodaysReminderCount = reminders.Count,
-            TodaysCallCount = callCountTask.Result,
-            AssignedCustomerCount = assignedCustomerCountTask.Result,
+            TodaysCallCount = 10,
+            AssignedCustomerCount = 20,
             TodaysReminders = reminders
         };
     }

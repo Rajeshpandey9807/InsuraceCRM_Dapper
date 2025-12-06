@@ -19,7 +19,7 @@ public class UserService : IUserService
     public async Task<User?> AuthenticateAsync(string email, string password)
     {
         var user = await _userRepository.GetByEmailAsync(email);
-        if (user is null)
+        if (user is null || !user.IsActive)
         {
             return null;
         }
@@ -28,13 +28,53 @@ public class UserService : IUserService
         return verificationResult == PasswordVerificationResult.Success ? user : null;
     }
 
-    public Task<IEnumerable<User>> GetAllUsersAsync() => _userRepository.GetAllAsync();
+    public Task<IEnumerable<User>> GetAllUsersAsync(bool includeInactive = false) =>
+        _userRepository.GetAllAsync(includeInactive);
 
     public Task<User?> GetByIdAsync(int id) => _userRepository.GetByIdAsync(id);
+
+    public async Task<IEnumerable<Role>> GetRolesAsync()
+    {
+        return await _userRepository.GetRolesAsync();
+    }
+    public async Task<int> CreateUserAsync(User user, string password)
+    {
+        user.PasswordHash = _passwordHasher.HashPassword(user, password);
+        user.IsActive = true;
+        return await _userRepository.InsertAsync(user);
+    }
+
+    public async Task UpdateUserAsync(User user, string? newPassword = null)
+    {
+        var existingUser = await _userRepository.GetByIdAsync(user.Id);
+        if (existingUser is null)
+        {
+            throw new KeyNotFoundException($"User with id {user.Id} was not found.");
+        }
+
+        existingUser.FullName = user.FullName;
+        existingUser.Email = user.Email;
+        existingUser.Mobile = user.Mobile;
+        existingUser.Role = user.Role;
+        existingUser.RoleId = user.RoleId;
+        existingUser.IsActive = user.IsActive;
+
+        if (!string.IsNullOrWhiteSpace(newPassword))
+        {
+            existingUser.PasswordHash = _passwordHasher.HashPassword(existingUser, newPassword);
+        }
+
+        await _userRepository.UpdateAsync(existingUser);
+    }
 
     public async Task UpdateRoleAsync(int userId, string role)
     {
         await _userRepository.UpdateRoleAsync(userId, role);
+    }
+
+    public async Task SetActiveStateAsync(int userId, bool isActive)
+    {
+        await _userRepository.SetActiveStateAsync(userId, isActive);
     }
 
     public async Task EnsureDefaultAdminAsync()
@@ -48,10 +88,11 @@ public class UserService : IUserService
 
         var adminUser = new User
         {
-            Name = "System Administrator",
+            FullName = "System Administrator",
             Email = adminEmail,
-            Role = "1",
-            Mobile = "896071117"
+            Role = "Admin",
+            Mobile = string.Empty,
+            IsActive = true
         };
 
         adminUser.PasswordHash = _passwordHasher.HashPassword(adminUser, "Admin@123");

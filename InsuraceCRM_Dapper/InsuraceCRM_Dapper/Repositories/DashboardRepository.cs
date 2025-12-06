@@ -17,12 +17,11 @@ public class DashboardRepository : IDashboardRepository
     public async Task<IEnumerable<Reminder>> GetTodaysRemindersAsync(int? employeeId)
     {
         const string sql = @"
-            SELECT r.*, c.Name AS CustomerName, c.MobileNumber AS CustomerMobileNumber
-            FROM Reminders r
-            LEFT JOIN Customers c ON c.Id = r.CustomerId
-            WHERE CONVERT(date, r.ReminderDateTime) = CONVERT(date, SYSUTCDATETIME())
-              AND (@EmployeeId IS NULL OR r.EmployeeId = @EmployeeId)
-            ORDER BY r.ReminderDateTime";
+             SELECT c.*, c.Name AS CustomerName, c.MobileNumber AS CustomerMobileNumber
+ from FollowUps f
+ LEFT JOIN Customers c ON c.Id = f.CustomerId
+             WHERE CONVERT(date, f.NextReminderDateTime) = CONVERT(date, SYSUTCDATETIME())
+            ORDER BY f.NextReminderDateTime;";
 
         using var connection = await _connectionFactory.CreateConnectionAsync();
         return await connection.QueryAsync<Reminder>(sql, new { EmployeeId = employeeId });

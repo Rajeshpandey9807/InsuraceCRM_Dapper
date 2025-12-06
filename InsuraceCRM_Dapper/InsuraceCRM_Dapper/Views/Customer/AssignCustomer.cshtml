@@ -17,9 +17,9 @@
                             <option value="">-- Select Employee --</option>
                             @foreach (var employee in Model.Employees)
                             {
-                                var isSelected = employee.CustomerID == Model.AssignedEmployeeId ? "selected" : string.Empty;
-                                <option value="@employee.CustomerID">
-                                    @employee.Name (@employee.Email)
+                                var isSelected = employee.Id == Model.AssignedEmployeeId ? "selected" : string.Empty;
+                                <option value="@employee.Id" selected="@isSelected">
+                                    @employee.FullName (@employee.Email)
                                 </option>
                             }
                         </select>

@@ -1,39 +1,142 @@
 @model FollowUpFormViewModel
 @{
     ViewData["Title"] = "Edit Follow-up";
+    var insuranceTypes = new[] { "Life", "Health", "Term", "ULIP" };
+    var callStatuses = new[] { "Interested", "Call Back Later", "Not Interested", "Not Reachable", "Number Switched Off" };
 }
 
-<div class="row">
-    <div class="col-md-8">
+<div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-9">
         <div class="card shadow-sm">
             <div class="card-body">
-                <h4 class="card-title mb-4">Edit Follow-up - @Model.CustomerName</h4>
+                <h4 class="card-title mb-1">Edit Follow-up - @Model.CustomerName</h4>
+                <p class="text-muted mb-4">Update the sections below to reflect the latest conversation.</p>
                 <form asp-action="Edit" method="post">
                     @Html.AntiForgeryToken()
                     <input type="hidden" asp-for="Id" />
                     <input type="hidden" asp-for="CustomerId" />
-                    <div class="mb-3">
-                        <label asp-for="FollowUpDate" class="form-label"></label>
-                        <input asp-for="FollowUpDate" class="form-control" type="date" />
-                        <span asp-validation-for="FollowUpDate" class="text-danger"></span>
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="border rounded-3 p-4 mb-4">
+                        <h6 class="text-uppercase text-muted fw-semibold mb-3">1. Basic Customer Info</h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Customer Name</label>
+                                <input class="form-control" value="@Model.CustomerName" readonly />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Mobile No</label>
+                                <input class="form-control" value="@Model.CustomerMobileNumber" readonly />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Location</label>
+                                <input class="form-control" value="@Model.CustomerLocation" readonly />
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label asp-for="FollowUpStatus" class="form-label"></label>
-                        <input asp-for="FollowUpStatus" class="form-control" />
-                        <span asp-validation-for="FollowUpStatus" class="text-danger"></span>
+
+                    <div class="border rounded-3 p-4 mb-4">
+                        <h6 class="text-uppercase text-muted fw-semibold mb-3">2. Insurance Requirement</h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label asp-for="InsuranceType" class="form-label"></label>
+                                <select asp-for="InsuranceType" class="form-select">
+                                    <option value="">Select insurance type</option>
+                                    @foreach (var type in insuranceTypes)
+                                    {
+                                        var isSelected = string.Equals(Model.InsuranceType, type, System.StringComparison.OrdinalIgnoreCase) ? "selected" : null;
+                                        <option value="@type" selected="@isSelected">@type</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="InsuranceType" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Budget" class="form-label"></label>
+                                <input asp-for="Budget" class="form-control" type="number" step="0.01" min="0" />
+                                <span asp-validation-for="Budget" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="HasExistingPolicy" class="form-label"></label>
+                                <select asp-for="HasExistingPolicy" class="form-select">
+                                    <option value="true" selected="@(Model.HasExistingPolicy ? "selected" : null)">Yes</option>
+                                    <option value="false" selected="@(Model.HasExistingPolicy ? null : "selected")">No</option>
+                                </select>
+                                <span asp-validation-for="HasExistingPolicy" class="text-danger"></span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label asp-for="FollowUpNote" class="form-label"></label>
-                        <textarea asp-for="FollowUpNote" class="form-control" rows="3"></textarea>
-                        <span asp-validation-for="FollowUpNote" class="text-danger"></span>
+
+                    <div class="border rounded-3 p-4 mb-4">
+                        <h6 class="text-uppercase text-muted fw-semibold mb-3">3. Call Follow-Up Details</h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label asp-for="FollowUpDate" class="form-label"></label>
+                                <input asp-for="FollowUpDate" class="form-control" type="date" />
+                                <span asp-validation-for="FollowUpDate" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="FollowUpStatus" class="form-label"></label>
+                                <select asp-for="FollowUpStatus" class="form-select">
+                                    <option value="">Select call status</option>
+                                    @foreach (var status in callStatuses)
+                                    {
+                                        var isSelected = string.Equals(Model.FollowUpStatus, status, System.StringComparison.OrdinalIgnoreCase) ? "selected" : null;
+                                        <option value="@status" selected="@isSelected">@status</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="FollowUpStatus" class="text-danger"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="FollowUpNote" class="form-label"></label>
+                                <textarea asp-for="FollowUpNote" class="form-control" rows="4" placeholder="Capture the key discussion points..."></textarea>
+                                <span asp-validation-for="FollowUpNote" class="text-danger"></span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label asp-for="NextReminderDateTime" class="form-label"></label>
-                        <input asp-for="NextReminderDateTime" class="form-control" type="datetime-local" asp-format="{0:yyyy-MM-ddTHH:mm}" />
-                        <span asp-validation-for="NextReminderDateTime" class="text-danger"></span>
+
+                    <div class="border rounded-3 p-4 mb-4">
+                        <h6 class="text-uppercase text-muted fw-semibold mb-3">4. Next Follow-Up</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="NextReminderDateTime" class="form-label"></label>
+                                <input asp-for="NextReminderDateTime" class="form-control" type="datetime-local" asp-format="{0:yyyy-MM-ddTHH:mm}" />
+                                <span asp-validation-for="NextReminderDateTime" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="ReminderRequired" class="form-label"></label>
+                                <select asp-for="ReminderRequired" class="form-select">
+                                    <option value="true" selected="@(Model.ReminderRequired ? "selected" : null)">Yes</option>
+                                    <option value="false" selected="@(Model.ReminderRequired ? null : "selected")">No</option>
+                                </select>
+                                <span asp-validation-for="ReminderRequired" class="text-danger"></span>
+                            </div>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Save</button>
-                    <a asp-controller="FollowUp" asp-action="History" asp-route-customerId="@Model.CustomerId" class="btn btn-secondary">Cancel</a>
+
+                    <div class="border rounded-3 p-4 mb-4">
+                        <h6 class="text-uppercase text-muted fw-semibold mb-3">5. Final Status</h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label asp-for="IsConverted" class="form-label"></label>
+                                <select asp-for="IsConverted" class="form-select">
+                                    <option value="" selected="@(Model.IsConverted is null ? "selected" : null)">Not decided</option>
+                                    <option value="true" selected="@(Model.IsConverted == true ? "selected" : null)">Yes</option>
+                                    <option value="false" selected="@(Model.IsConverted == false ? "selected" : null)">No</option>
+                                </select>
+                                <span asp-validation-for="IsConverted" class="text-danger"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="ConversionReason" class="form-label"></label>
+                                <textarea asp-for="ConversionReason" class="form-control" rows="3" placeholder="Capture the reason if the deal did not convert."></textarea>
+                                <span asp-validation-for="ConversionReason" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Update Follow-up</button>
+                        <a asp-controller="FollowUp" asp-action="History" asp-route-customerId="@Model.CustomerId" class="btn btn-secondary">Cancel</a>
+                    </div>
                 </form>
             </div>
         </div>
