@@ -87,4 +87,11 @@ public class UserRepository : IUserRepository
         using var connection = await _connectionFactory.CreateConnectionAsync();
         return await connection.QueryAsync<User>(sql, new { IncludeInactive = includeInactive });
     }
+
+    public async Task<int> CountByRoleAsync(string role)
+    {
+        const string sql = "SELECT COUNT(1) FROM Users WHERE LOWER(Role) = LOWER(@Role);";
+        using var connection = await _connectionFactory.CreateConnectionAsync();
+        return await connection.ExecuteScalarAsync<int>(sql, new { Role = role });
+    }
 }

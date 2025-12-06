@@ -1,3 +1,10 @@
+CREATE TABLE Roles (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(50) NOT NULL UNIQUE,
+    Description NVARCHAR(250) NULL,
+    IsSystem BIT NOT NULL DEFAULT 0
+);
+
 CREATE TABLE Users (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     Name NVARCHAR(150) NOT NULL,
@@ -42,3 +49,14 @@ CREATE NONCLUSTERED INDEX IX_Customers_AssignedEmployee
 CREATE NONCLUSTERED INDEX IX_Reminders_Employee_ReminderDate
     ON Reminders (EmployeeId, ReminderDateTime)
     INCLUDE (IsShown);
+
+INSERT INTO Roles (Name, Description, IsSystem)
+SELECT v.Name, v.Description, v.IsSystem
+FROM (VALUES
+    ('Admin', 'Full system access', 1),
+    ('Manager', 'Manage teams and assignments', 0),
+    ('Employee', 'Standard access for daily work', 0)
+) AS v(Name, Description, IsSystem)
+WHERE NOT EXISTS (
+    SELECT 1 FROM Roles r WHERE LOWER(r.Name) = LOWER(v.Name)
+);

@@ -5,5 +5,6 @@ namespace InsuraceCRM_Dapper.ViewModels;
 public class ManageRolesViewModel
 {
     public IEnumerable<User> Users { get; set; } = Enumerable.Empty<User>();
-    public IEnumerable<string> Roles { get; set; } = new[] { "Admin", "Manager", "Employee" };
+    public IEnumerable<Role> Roles { get; set; } = Enumerable.Empty<Role>();
+    public RoleFormViewModel NewRole { get; set; } = new();
 }
