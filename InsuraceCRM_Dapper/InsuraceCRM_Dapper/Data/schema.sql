@@ -12,8 +12,11 @@ CREATE TABLE Customers (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     Name NVARCHAR(150) NOT NULL,
     MobileNumber NVARCHAR(50) NOT NULL,
-    Location NVARCHAR(150) NULL,
+    Location NVARCHAR(150) NOT NULL,
     InsuranceType NVARCHAR(100) NULL,
+    Income DECIMAL(18,2) NULL,
+    SourceOfIncome NVARCHAR(150) NULL,
+    FamilyMembers INT NULL,
     AssignedEmployeeId INT NULL REFERENCES Users(Id),
     CreatedDate DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );

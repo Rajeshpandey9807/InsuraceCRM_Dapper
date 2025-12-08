@@ -1,3 +1,4 @@
+using System.Text;
 using InsuraceCRM_Dapper.Data;
 using InsuraceCRM_Dapper.Interfaces.Repositories;
 using InsuraceCRM_Dapper.Interfaces.Services;
@@ -6,6 +7,8 @@ using InsuraceCRM_Dapper.Repositories;
 using InsuraceCRM_Dapper.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
+
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
 var builder = WebApplication.CreateBuilder(args);
 
