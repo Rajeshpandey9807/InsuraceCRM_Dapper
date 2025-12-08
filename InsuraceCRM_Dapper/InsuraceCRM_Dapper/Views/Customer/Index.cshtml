@@ -109,6 +109,9 @@
                             Required columns: <strong>Name</strong>, <strong>MobileNumber</strong>, <strong>Location</strong>.
                             Optional columns: InsuranceType, Income, SourceOfIncome, FamilyMembers.
                         </p>
+                        <div class="mb-3">
+                            <a asp-action="DownloadTemplate" class="btn btn-link px-0">Download sample template</a>
+                        </div>
                         @if (bulkErrors?.Count > 0)
                         {
                             <div class="alert alert-warning small" role="alert">

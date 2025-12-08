@@ -3,6 +3,7 @@ using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using InsuraceCRM_Dapper.Interfaces.Services;
 using InsuraceCRM_Dapper.Models;
 using InsuraceCRM_Dapper.ViewModels;
@@ -88,6 +89,21 @@ public class CustomerController : Controller
         return View("Index", viewModel);
     }
 
+    [Authorize(Roles = "Admin,Manager")]
+    [HttpGet]
+    public IActionResult DownloadTemplate()
+    {
+        var lines = new[]
+        {
+            "Name,MobileNumber,Location,InsuranceType,Income,SourceOfIncome,FamilyMembers",
+            "John Doe,9999999999,Mumbai,Life Insurance,750000,Salary,4",
+            "Jane Smith,8888888888,Bengaluru,Health Insurance,550000,Business,3"
+        };
+
+        var csvBytes = Encoding.UTF8.GetBytes(string.Join('\n', lines));
+        return File(csvBytes, "text/csv", "customer-template.csv");
+    }
+
     public async Task<IActionResult> Index()
     {
         var currentUser = await GetCurrentUserAsync();
@@ -129,7 +145,7 @@ public class CustomerController : Controller
     [Authorize(Roles = "Admin,Manager")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CreateInline(CustomerInputModel inputModel)
+    public async Task<IActionResult> CreateInline([Bind(Prefix = "NewCustomer")] CustomerInputModel inputModel)
     {
         if (!ModelState.IsValid)
         {
