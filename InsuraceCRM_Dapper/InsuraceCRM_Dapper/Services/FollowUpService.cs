@@ -54,6 +54,9 @@ public class FollowUpService : IFollowUpService
     public Task<IEnumerable<FollowUp>> GetFollowUpsForCustomerAsync(int customerId) =>
         _followUpRepository.GetByCustomerIdAsync(customerId);
 
+    public Task<IEnumerable<UserFollowUpDetail>> GetFollowUpsForEmployeeAsync(int employeeId) =>
+        _followUpRepository.GetByEmployeeIdAsync(employeeId);
+
     private async Task SyncSoldProductDetailAsync(FollowUp followUp, int followUpId)
     {
         var hasSaleDetails = followUp.IsConverted == true

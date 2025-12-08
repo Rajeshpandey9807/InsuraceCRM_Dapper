@@ -8,4 +8,5 @@ public interface IFollowUpService
     Task UpdateFollowUpAsync(FollowUp followUp);
     Task<FollowUp?> GetFollowUpByIdAsync(int id);
     Task<IEnumerable<FollowUp>> GetFollowUpsForCustomerAsync(int customerId);
+    Task<IEnumerable<UserFollowUpDetail>> GetFollowUpsForEmployeeAsync(int employeeId);
 }
