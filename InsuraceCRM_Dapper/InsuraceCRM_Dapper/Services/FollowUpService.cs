@@ -8,18 +8,22 @@ public class FollowUpService : IFollowUpService
 {
     private readonly IFollowUpRepository _followUpRepository;
     private readonly IReminderRepository _reminderRepository;
+    private readonly ISoldProductDetailService _soldProductDetailService;
 
     public FollowUpService(
         IFollowUpRepository followUpRepository,
-        IReminderRepository reminderRepository)
+        IReminderRepository reminderRepository,
+        ISoldProductDetailService soldProductDetailService)
     {
         _followUpRepository = followUpRepository;
         _reminderRepository = reminderRepository;
+        _soldProductDetailService = soldProductDetailService;
     }
 
     public async Task<int> CreateFollowUpAsync(FollowUp followUp, int employeeId)
     {
         var followUpId = await _followUpRepository.InsertAsync(followUp);
+        await SyncSoldProductDetailAsync(followUp, followUpId);
 
         if (followUp.ReminderRequired && followUp.NextReminderDateTime.HasValue)
         {
@@ -41,6 +45,7 @@ public class FollowUpService : IFollowUpService
     public async Task UpdateFollowUpAsync(FollowUp followUp)
     {
         await _followUpRepository.UpdateAsync(followUp);
+        await SyncSoldProductDetailAsync(followUp, followUp.Id);
     }
 
     public Task<FollowUp?> GetFollowUpByIdAsync(int id) =>
@@ -48,4 +53,35 @@ public class FollowUpService : IFollowUpService
 
     public Task<IEnumerable<FollowUp>> GetFollowUpsForCustomerAsync(int customerId) =>
         _followUpRepository.GetByCustomerIdAsync(customerId);
+
+    private async Task SyncSoldProductDetailAsync(FollowUp followUp, int followUpId)
+    {
+        var hasSaleDetails = followUp.IsConverted == true
+            && followUp.SoldProductId.HasValue
+            && !string.IsNullOrWhiteSpace(followUp.SoldProductName)
+            && followUp.TicketSize.HasValue
+            && followUp.TenureInYears.HasValue
+            && !string.IsNullOrWhiteSpace(followUp.PolicyNumber)
+            && followUp.PolicyEnforceDate.HasValue;
+
+        if (hasSaleDetails)
+        {
+            var detail = new SoldProductDetail
+            {
+                CustomerId = followUp.CustomerId,
+                FollowUpId = followUpId,
+                SoldProductId = followUp.SoldProductId!.Value,
+                SoldProductName = followUp.SoldProductName!,
+                TicketSize = followUp.TicketSize!.Value,
+                TenureInYears = followUp.TenureInYears!.Value,
+                PolicyNumber = followUp.PolicyNumber!,
+                PolicyEnforceDate = followUp.PolicyEnforceDate!.Value
+            };
+
+            await _soldProductDetailService.UpsertAsync(detail);
+            return;
+        }
+
+        await _soldProductDetailService.DeleteByFollowUpIdAsync(followUpId);
+    }
 }

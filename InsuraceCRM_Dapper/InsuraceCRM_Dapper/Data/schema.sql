@@ -42,6 +42,24 @@ CREATE TABLE FollowUps (
     PolicyEnforceDate DATE NULL
 );
 
+CREATE TABLE SoldProductDetails (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    CustomerId INT NOT NULL REFERENCES Customers(Id),
+    FollowUpId INT NOT NULL REFERENCES FollowUps(Id) ON DELETE CASCADE,
+    SoldProductId INT NOT NULL REFERENCES Products(Id),
+    SoldProductName NVARCHAR(200) NOT NULL,
+    TicketSize DECIMAL(18,2) NOT NULL,
+    TenureInYears INT NOT NULL,
+    PolicyNumber NVARCHAR(100) NOT NULL,
+    PolicyEnforceDate DATE NOT NULL,
+    CreatedOn DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    UpdatedOn DATETIME2 NULL,
+    CONSTRAINT UQ_SoldProductDetails_FollowUp UNIQUE (FollowUpId)
+);
+
+CREATE NONCLUSTERED INDEX IX_SoldProductDetails_Customer
+    ON SoldProductDetails (CustomerId);
+
 CREATE TABLE Reminders (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     CustomerId INT NOT NULL REFERENCES Customers(Id),
