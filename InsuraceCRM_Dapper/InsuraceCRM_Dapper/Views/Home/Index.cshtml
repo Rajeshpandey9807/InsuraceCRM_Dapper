@@ -165,6 +165,22 @@
                                         <td>
                                             <div class="fw-semibold">@reminder.CustomerName</div>
                                             <div class="text-muted small">@(!string.IsNullOrWhiteSpace(reminder.CustomerMobileNumber) ? reminder.CustomerMobileNumber : "—")</div>
+                                    var statusColor = customer.Status switch
+                                    {
+                                        "Converted" => "bg-emerald-500/20 text-emerald-200 border-emerald-400/40",
+                                        "Active" => "bg-blue-500/20 text-blue-200 border-blue-400/40",
+                                        "Follow-up" => "bg-amber-500/20 text-amber-200 border-amber-400/40",
+                                        _ => "bg-rose-500/20 text-rose-200 border-rose-400/40"
+                                    };
+                                    <tr class="transition duration-200 hover:bg-white/5">
+                                        <td class="px-4 py-4">
+                                            <div class="flex items-center gap-3">
+                                                <div class="h-10 w-10 rounded-2xl border border-white/10 bg-white/5"></div>
+                                                <div>
+                                                    <p class="font-semibold">@customer.Name</p>
+                                                    <p class="text-xs text-white/50">Last touch @DateTime.UtcNow.ToLocalTime():h:mm tt</p>
+                                                </div>
+                                            </div>
                                         </td>
                                         <td>
                                             @reminder.ReminderDateTime.ToLocalTime().ToString("h:mm tt")
