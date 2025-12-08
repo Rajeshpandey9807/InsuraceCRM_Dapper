@@ -68,6 +68,8 @@ public class FollowUpController : Controller
             return Forbid();
         }
 
+        ValidateConversionDetails(viewModel);
+
         if (!ModelState.IsValid)
         {
             viewModel.CustomerName = customer.Name;
@@ -130,6 +132,8 @@ public class FollowUpController : Controller
             return Forbid();
         }
 
+        ValidateConversionDetails(viewModel);
+
         if (!ModelState.IsValid)
         {
             viewModel.CustomerName = customer.Name;
@@ -181,7 +185,11 @@ public class FollowUpController : Controller
         NextReminderDateTime = viewModel.ReminderRequired ? viewModel.NextReminderDateTime : null,
         ReminderRequired = viewModel.ReminderRequired,
         IsConverted = viewModel.IsConverted,
-        ConversionReason = viewModel.ConversionReason
+        ConversionReason = viewModel.ConversionReason,
+        SoldProductName = viewModel.IsConverted == true ? viewModel.SoldProductName : null,
+        TicketSize = viewModel.IsConverted == true ? viewModel.TicketSize : null,
+        PolicyNumber = viewModel.IsConverted == true ? viewModel.PolicyNumber : null,
+        PolicyEnforceDate = viewModel.IsConverted == true ? viewModel.PolicyEnforceDate : null
     };
 
     private static FollowUpFormViewModel MapToViewModel(FollowUp followUp, Customer customer) => new()
@@ -200,7 +208,11 @@ public class FollowUpController : Controller
         NextReminderDateTime = followUp.NextReminderDateTime,
         ReminderRequired = followUp.ReminderRequired,
         IsConverted = followUp.IsConverted,
-        ConversionReason = followUp.ConversionReason
+        ConversionReason = followUp.ConversionReason,
+        SoldProductName = followUp.SoldProductName,
+        TicketSize = followUp.TicketSize,
+        PolicyNumber = followUp.PolicyNumber,
+        PolicyEnforceDate = followUp.PolicyEnforceDate
     };
 
     private async Task<User?> GetCurrentUserAsync()
@@ -223,5 +235,33 @@ public class FollowUpController : Controller
         }
 
         return customer.AssignedEmployeeId == user.Id;
+    }
+
+    private void ValidateConversionDetails(FollowUpFormViewModel viewModel)
+    {
+        if (viewModel.IsConverted != true)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(viewModel.SoldProductName))
+        {
+            ModelState.AddModelError(nameof(viewModel.SoldProductName), "Please specify the product that was sold.");
+        }
+
+        if (!viewModel.TicketSize.HasValue || viewModel.TicketSize <= 0)
+        {
+            ModelState.AddModelError(nameof(viewModel.TicketSize), "Ticket size must be greater than zero for converted deals.");
+        }
+
+        if (string.IsNullOrWhiteSpace(viewModel.PolicyNumber))
+        {
+            ModelState.AddModelError(nameof(viewModel.PolicyNumber), "Policy number is required for converted deals.");
+        }
+
+        if (!viewModel.PolicyEnforceDate.HasValue)
+        {
+            ModelState.AddModelError(nameof(viewModel.PolicyEnforceDate), "Provide the policy enforce date to complete the sale details.");
+        }
     }
 }

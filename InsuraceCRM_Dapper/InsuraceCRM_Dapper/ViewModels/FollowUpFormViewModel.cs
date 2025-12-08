@@ -53,4 +53,20 @@ public class FollowUpFormViewModel
     [StringLength(500)]
     [Display(Name = "Reason (if not converted)")]
     public string? ConversionReason { get; set; }
+
+    [StringLength(200)]
+    [Display(Name = "Sold Product")]
+    public string? SoldProductName { get; set; }
+
+    [Display(Name = "Ticket Size")]
+    [Range(0, double.MaxValue, ErrorMessage = "Ticket size must be a positive value.")]
+    public decimal? TicketSize { get; set; }
+
+    [StringLength(100)]
+    [Display(Name = "Policy Number")]
+    public string? PolicyNumber { get; set; }
+
+    [Display(Name = "Policy Enforce Date")]
+    [DataType(DataType.Date)]
+    public DateTime? PolicyEnforceDate { get; set; }
 }

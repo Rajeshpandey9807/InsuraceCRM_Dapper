@@ -28,7 +28,11 @@ public class FollowUpRepository : IFollowUpRepository
                 NextReminderDateTime,
                 ReminderRequired,
                 IsConverted,
-                ConversionReason)
+                ConversionReason,
+                SoldProductName,
+                TicketSize,
+                PolicyNumber,
+                PolicyEnforceDate)
             VALUES (
                 @CustomerId,
                 @FollowUpDate,
@@ -40,7 +44,11 @@ public class FollowUpRepository : IFollowUpRepository
                 @NextReminderDateTime,
                 @ReminderRequired,
                 @IsConverted,
-                @ConversionReason);
+                @ConversionReason,
+                @SoldProductName,
+                @TicketSize,
+                @PolicyNumber,
+                @PolicyEnforceDate);
             SELECT CAST(SCOPE_IDENTITY() as int);";
 
         using var connection = await _connectionFactory.CreateConnectionAsync();
@@ -60,7 +68,11 @@ public class FollowUpRepository : IFollowUpRepository
                 NextReminderDateTime = @NextReminderDateTime,
                 ReminderRequired = @ReminderRequired,
                 IsConverted = @IsConverted,
-                ConversionReason = @ConversionReason
+                ConversionReason = @ConversionReason,
+                SoldProductName = @SoldProductName,
+                TicketSize = @TicketSize,
+                PolicyNumber = @PolicyNumber,
+                PolicyEnforceDate = @PolicyEnforceDate
             WHERE Id = @Id;";
 
         using var connection = await _connectionFactory.CreateConnectionAsync();

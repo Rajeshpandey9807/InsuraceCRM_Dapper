@@ -31,6 +31,10 @@
                             <th>Next Follow-Up</th>
                             <th>Reminder Required</th>
                             <th>Converted</th>
+                            <th>Product Sold</th>
+                            <th>Ticket Size</th>
+                            <th>Policy #</th>
+                            <th>Enforce Date</th>
                             <th>Reason</th>
                             <th></th>
                         </tr>
@@ -58,6 +62,10 @@
                                     }
                                     @conversionText
                                 </td>
+                                <td>@(string.IsNullOrWhiteSpace(followUp.SoldProductName) ? "-" : followUp.SoldProductName)</td>
+                                <td>@(followUp.TicketSize.HasValue ? followUp.TicketSize.Value.ToString("N2") : "-")</td>
+                                <td>@(string.IsNullOrWhiteSpace(followUp.PolicyNumber) ? "-" : followUp.PolicyNumber)</td>
+                                <td>@(followUp.PolicyEnforceDate?.ToString("yyyy-MM-dd") ?? "-")</td>
                                 <td>@(string.IsNullOrWhiteSpace(followUp.ConversionReason) ? "-" : followUp.ConversionReason)</td>
                                 <td class="text-end">
                                     <a asp-action="Edit" asp-route-id="@followUp.Id" class="btn btn-sm btn-secondary">Edit</a>
