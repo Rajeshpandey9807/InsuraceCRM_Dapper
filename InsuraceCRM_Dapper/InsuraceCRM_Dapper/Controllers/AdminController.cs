@@ -24,7 +24,7 @@ public class AdminController : Controller
         var viewModel = new ManageRolesViewModel
         {
             Users = users,
-            Roles = AllowedRoles
+            Roles = await _userService.GetRolesAsync()
         };
 
         return View(viewModel);
@@ -32,15 +32,16 @@ public class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpdateRole(int userId, string role)
+    public async Task<IActionResult> UpdateRole(int userId, int roleId)
     {
-        if (!AllowedRoles.Contains(role))
-        {
-            ModelState.AddModelError(string.Empty, "Invalid role selection.");
-            return await ManageRoles();
-        }
+        //if (!AllowedRoles.Contains(role))
+        //{
+        //    ModelState.AddModelError(string.Empty, "Invalid role selection.");
+        //    return await ManageRoles();
+        //}
+      
 
-        await _userService.UpdateRoleAsync(userId, role);
+        await _userService.UpdateRoleAsync(userId, roleId);
         return RedirectToAction(nameof(ManageRoles));
     }
 

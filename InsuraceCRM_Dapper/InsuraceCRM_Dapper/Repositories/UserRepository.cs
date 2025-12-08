@@ -49,11 +49,11 @@ public class UserRepository : IUserRepository
         await connection.ExecuteAsync(sql, user);
     }
 
-    public async Task UpdateRoleAsync(int userId, string role)
+    public async Task UpdateRoleAsync(int userId, int RoleId)
     {
-        const string sql = "UPDATE Users SET Role = @Role WHERE Id = @UserId;";
+        const string sql = "UPDATE Users SET RoleId = @role WHERE Id = @UserId;";
         using var connection = await _connectionFactory.CreateConnectionAsync();
-        await connection.ExecuteAsync(sql, new { Role = role, UserId = userId });
+        await connection.ExecuteAsync(sql, new { RoleId = RoleId, UserId = userId });
     }
 
     public async Task DeleteAsync(int id)

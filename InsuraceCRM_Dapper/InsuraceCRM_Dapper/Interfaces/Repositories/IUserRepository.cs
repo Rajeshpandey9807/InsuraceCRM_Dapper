@@ -6,7 +6,7 @@ public interface IUserRepository
 {
     Task<int> InsertAsync(User user);
     Task UpdateAsync(User user);
-    Task UpdateRoleAsync(int userId, string role);
+    Task UpdateRoleAsync(int userId, int role);
     Task DeleteAsync(int id);
     Task SetActiveStateAsync(int userId, bool isActive);
     Task<User?> GetByIdAsync(int id);

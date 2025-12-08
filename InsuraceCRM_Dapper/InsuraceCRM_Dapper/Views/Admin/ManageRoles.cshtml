@@ -27,12 +27,18 @@
                                 <form asp-action="UpdateRole" method="post" class="d-flex align-items-center gap-2">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="userId" value="@user.Id" />
-                                    <select name="role" class="form-select form-select-sm">
-                                        @foreach (var role in Model.Roles)
-                                        {
-                                            <option value="@role" selected="@(role == user.Role)">@role</option>
-                                        }
-                                    </select>
+                                 <select name="roleId"
+        class="form-control"
+        asp-items="Model.Roles.Select(r => new SelectListItem {
+            Value = r.RoleId.ToString(),
+            Text = r.RoleName
+        })">
+    <option value="">-- Select Role --</option>
+</select>
+
+
+            
+     
                                     <button type="submit" class="btn btn-sm btn-primary">Save</button>
                                 </form>
                             </td>

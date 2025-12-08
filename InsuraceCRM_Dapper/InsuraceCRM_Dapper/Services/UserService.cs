@@ -67,9 +67,9 @@ public class UserService : IUserService
         await _userRepository.UpdateAsync(existingUser);
     }
 
-    public async Task UpdateRoleAsync(int userId, string role)
+    public async Task UpdateRoleAsync(int userId, int RoleId)
     {
-        await _userRepository.UpdateRoleAsync(userId, role);
+        await _userRepository.UpdateRoleAsync(userId, RoleId);
     }
 
     public async Task SetActiveStateAsync(int userId, bool isActive)
