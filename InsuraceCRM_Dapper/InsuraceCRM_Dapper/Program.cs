@@ -29,6 +29,7 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddSingleton<IDbConnectionFactory, SqlConnectionFactory>();
+builder.Services.AddSingleton<IDatabaseMigrator, DatabaseMigrator>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
@@ -50,6 +51,9 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
+    var migrator = scope.ServiceProvider.GetRequiredService<IDatabaseMigrator>();
+    await migrator.EnsureSchemaAsync();
+
     var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
     await userService.EnsureDefaultAdminAsync();
 }
