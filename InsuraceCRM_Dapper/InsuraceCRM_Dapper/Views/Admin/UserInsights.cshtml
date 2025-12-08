@@ -25,9 +25,18 @@
                     <option value="">-- Select --</option>
                     @foreach (var user in Model.Users)
                     {
-                        <option value="@user.Id" @(Model.SelectedUserId == user.Id ? "selected" : null)>
-                            @user.FullName (@user.Role)
-                        </option>
+                        if (Model.SelectedUserId == user.Id)
+                        {
+                            <option value="@user.Id" selected>
+                                @user.FullName (@user.Role)
+                            </option>
+                        }
+                        else
+                        {
+                            <option value="@user.Id">
+                                @user.FullName (@user.Role)
+                            </option>
+                        }
                     }
                 </select>
             </div>
