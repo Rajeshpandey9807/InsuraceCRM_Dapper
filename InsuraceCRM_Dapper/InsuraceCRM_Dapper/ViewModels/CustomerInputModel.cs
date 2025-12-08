@@ -1,11 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using InsuraceCRM_Dapper.Models;
 
-namespace InsuraceCRM_Dapper.Models;
+namespace InsuraceCRM_Dapper.ViewModels;
 
-public class Customer
+public class CustomerInputModel
 {
-    public int Id { get; set; }
-
     [Required, StringLength(150)]
     public string Name { get; set; } = string.Empty;
 
@@ -27,9 +26,15 @@ public class Customer
     [Range(0, 50, ErrorMessage = "Family members must be between 0 and 50.")]
     public int? FamilyMembers { get; set; }
 
-    public int? AssignedEmployeeId { get; set; }
-
-    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
-
-    public string? AssignedEmployeeName { get; set; }
+    public Customer ToCustomer() =>
+        new()
+        {
+            Name = Name?.Trim() ?? string.Empty,
+            MobileNumber = MobileNumber?.Trim() ?? string.Empty,
+            Location = Location?.Trim() ?? string.Empty,
+            InsuranceType = string.IsNullOrWhiteSpace(InsuranceType) ? null : InsuranceType.Trim(),
+            Income = Income,
+            SourceOfIncome = string.IsNullOrWhiteSpace(SourceOfIncome) ? null : SourceOfIncome.Trim(),
+            FamilyMembers = FamilyMembers
+        };
 }

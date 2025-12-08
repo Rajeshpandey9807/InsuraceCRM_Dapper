@@ -18,8 +18,26 @@ public class CustomerRepository : ICustomerRepository
     public async Task<int> InsertAsync(Customer customer)
     {
         const string sql = @"
-            INSERT INTO Customers (Name, MobileNumber, Location, InsuranceType, AssignedEmployeeId, CreatedDate)
-            VALUES (@Name, @MobileNumber, @Location, @InsuranceType, @AssignedEmployeeId, @CreatedDate);
+            INSERT INTO Customers (
+                Name,
+                MobileNumber,
+                Location,
+                InsuranceType,
+                Income,
+                SourceOfIncome,
+                FamilyMembers,
+                AssignedEmployeeId,
+                CreatedDate)
+            VALUES (
+                @Name,
+                @MobileNumber,
+                @Location,
+                @InsuranceType,
+                @Income,
+                @SourceOfIncome,
+                @FamilyMembers,
+                @AssignedEmployeeId,
+                @CreatedDate);
             SELECT CAST(SCOPE_IDENTITY() as int);";
 
         using var connection = await _connectionFactory.CreateConnectionAsync();
@@ -34,6 +52,9 @@ public class CustomerRepository : ICustomerRepository
                 MobileNumber = @MobileNumber,
                 Location = @Location,
                 InsuranceType = @InsuranceType,
+                Income = @Income,
+                SourceOfIncome = @SourceOfIncome,
+                FamilyMembers = @FamilyMembers,
                 AssignedEmployeeId = @AssignedEmployeeId
             WHERE Id = @Id;";
 
