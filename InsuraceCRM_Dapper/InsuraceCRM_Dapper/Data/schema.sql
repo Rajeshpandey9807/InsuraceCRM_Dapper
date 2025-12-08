@@ -34,8 +34,10 @@ CREATE TABLE FollowUps (
     ReminderRequired BIT NOT NULL DEFAULT 0,
     IsConverted BIT NULL,
     ConversionReason NVARCHAR(500) NULL,
+    SoldProductId INT NULL REFERENCES Products(Id),
     SoldProductName NVARCHAR(200) NULL,
     TicketSize DECIMAL(18,2) NULL,
+    TenureInYears INT NULL,
     PolicyNumber NVARCHAR(100) NULL,
     PolicyEnforceDate DATE NULL
 );

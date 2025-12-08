@@ -21,16 +21,21 @@
             product: salesSummary?.querySelector('[data-sales-summary="product"]'),
             ticket: salesSummary?.querySelector('[data-sales-summary="ticket"]'),
             policyNumber: salesSummary?.querySelector('[data-sales-summary="policyNumber"]'),
-            policyDate: salesSummary?.querySelector('[data-sales-summary="policyDate"]')
+            policyDate: salesSummary?.querySelector('[data-sales-summary="policyDate"]'),
+            tenure: salesSummary?.querySelector('[data-sales-summary="tenure"]')
         };
         const modal = modalElement && BootstrapModal ? new BootstrapModal(modalElement) : null;
         const cancelButton = modalElement?.querySelector('[data-action="cancel-sales-modal"]');
         const saveButton = modalElement?.querySelector('[data-action="save-sales-modal"]');
         const requiredInputs = modalElement ? Array.from(modalElement.querySelectorAll('[data-sales-required]')) : [];
+        const productSelect = modalElement?.querySelector('#SoldProductId');
+        const tenureSelect = modalElement?.querySelector('#TenureInYears');
         let lastCommittedConversionValue = conversionSelect?.value ?? '';
 
         requiredInputs.forEach(input => {
-            input.addEventListener('input', () => input.classList.remove('is-invalid'));
+            const clearValidation = () => input.classList.remove('is-invalid');
+            input.addEventListener('input', clearValidation);
+            input.addEventListener('change', clearValidation);
         });
 
         function toggleNextSection() {
@@ -57,6 +62,14 @@
                 input.value = '';
                 input.classList.remove('is-invalid');
             });
+
+            if (productSelect) {
+                productSelect.value = '';
+            }
+
+            if (tenureSelect) {
+                tenureSelect.value = '';
+            }
         }
 
         function hideSalesSummary() {
@@ -100,6 +113,15 @@
             return element?.value?.trim() ?? '';
         }
 
+        function getSelectedProductName() {
+            if (!productSelect) {
+                return getFieldValue('#SoldProductName');
+            }
+
+            const selectedOption = productSelect.options[productSelect.selectedIndex];
+            return selectedOption?.text?.trim() ?? '';
+        }
+
         function formatTicketSize(value) {
             if (!value) {
                 return '-';
@@ -116,8 +138,21 @@
             });
         }
 
+        function formatTenure(value) {
+            if (!value) {
+                return '-';
+            }
+
+            const numericValue = Number(value);
+            if (Number.isNaN(numericValue)) {
+                return value;
+            }
+
+            return `${numericValue}`;
+        }
+
         function hasSalesDetails() {
-            return ['#SoldProductName', '#TicketSize', '#PolicyNumber', '#PolicyEnforceDate']
+            return ['#SoldProductId', '#TicketSize', '#TenureInYears', '#PolicyNumber', '#PolicyEnforceDate']
                 .some(selector => !!getFieldValue(selector));
         }
 
@@ -126,12 +161,13 @@
                 return;
             }
 
-            const product = getFieldValue('#SoldProductName');
+            const product = getSelectedProductName();
             const ticket = getFieldValue('#TicketSize');
+            const tenure = getFieldValue('#TenureInYears');
             const policyNumber = getFieldValue('#PolicyNumber');
             const policyDate = getFieldValue('#PolicyEnforceDate');
 
-            const hasDetails = [product, ticket, policyNumber, policyDate].some(value => value);
+            const hasDetails = [product, ticket, tenure, policyNumber, policyDate].some(value => value);
 
             if (!hasDetails) {
                 hideSalesSummary();
@@ -140,6 +176,7 @@
 
             if (summaryFields.product) summaryFields.product.textContent = product || '-';
             if (summaryFields.ticket) summaryFields.ticket.textContent = ticket ? formatTicketSize(ticket) : '-';
+            if (summaryFields.tenure) summaryFields.tenure.textContent = tenure ? formatTenure(tenure) : '-';
             if (summaryFields.policyNumber) summaryFields.policyNumber.textContent = policyNumber || '-';
             if (summaryFields.policyDate) summaryFields.policyDate.textContent = policyDate || '-';
 

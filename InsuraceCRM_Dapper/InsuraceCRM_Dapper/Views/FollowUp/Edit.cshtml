@@ -5,7 +5,7 @@
     var callStatuses = new[] { "Interested", "Call Back Later", "Not Interested", "Not Reachable", "Number Switched Off" };
     var showNextFollowUp = string.Equals(Model.FollowUpStatus, "Interested", System.StringComparison.OrdinalIgnoreCase);
     var hasSalesDetails = Model?.IsConverted == true && (!string.IsNullOrWhiteSpace(Model.SoldProductName) ||
-        Model.TicketSize.HasValue || !string.IsNullOrWhiteSpace(Model.PolicyNumber) || Model.PolicyEnforceDate.HasValue);
+        Model.TicketSize.HasValue || Model.TenureInYears.HasValue || !string.IsNullOrWhiteSpace(Model.PolicyNumber) || Model.PolicyEnforceDate.HasValue);
 }
 
 <div class="row justify-content-center">
@@ -143,6 +143,7 @@
                                 <div id="salesDetailsSummary" class="alert alert-info mt-3 @(hasSalesDetails ? string.Empty : "d-none")">
                                     <div><strong>Product:</strong> <span data-sales-summary="product">@(Model.SoldProductName ?? "-")</span></div>
                                     <div><strong>Ticket Size:</strong> <span data-sales-summary="ticket">@(Model.TicketSize.HasValue ? Model.TicketSize.Value.ToString("N2") : "-")</span></div>
+                                    <div><strong>Tenure (years):</strong> <span data-sales-summary="tenure">@(Model.TenureInYears?.ToString() ?? "-")</span></div>
                                     <div><strong>Policy #:</strong> <span data-sales-summary="policyNumber">@(Model.PolicyNumber ?? "-")</span></div>
                                     <div><strong>Enforce Date:</strong> <span data-sales-summary="policyDate">@(Model.PolicyEnforceDate?.ToString("yyyy-MM-dd") ?? "-")</span></div>
                                 </div>
@@ -160,14 +161,27 @@
                                 <div class="modal-body">
                                     <div class="row g-3">
                                         <div class="col-md-6">
-                                            <label asp-for="SoldProductName" class="form-label"></label>
-                                            <input asp-for="SoldProductName" class="form-control" data-sales-required="true" />
-                                            <span asp-validation-for="SoldProductName" class="text-danger"></span>
+                                            <label asp-for="SoldProductId" class="form-label"></label>
+                                            <select asp-for="SoldProductId" class="form-select" asp-items="Model.ProductOptions" data-sales-required="true">
+                                                <option value="">Select a product</option>
+                                            </select>
+                                            <span asp-validation-for="SoldProductId" class="text-danger"></span>
                                         </div>
                                         <div class="col-md-6">
                                             <label asp-for="TicketSize" class="form-label"></label>
                                             <input asp-for="TicketSize" class="form-control" type="number" step="0.01" min="0" data-sales-required="true" />
                                             <span asp-validation-for="TicketSize" class="text-danger"></span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label asp-for="TenureInYears" class="form-label"></label>
+                                            <select asp-for="TenureInYears" class="form-select" data-sales-required="true">
+                                                <option value="">Select tenure</option>
+                                                @for (var tenure = 1; tenure <= 5; tenure++)
+                                                {
+                                                    <option value="@tenure" selected="@(Model.TenureInYears == tenure ? "selected" : null)">@tenure year@(tenure == 1 ? "" : "s")</option>
+                                                }
+                                            </select>
+                                            <span asp-validation-for="TenureInYears" class="text-danger"></span>
                                         </div>
                                         <div class="col-md-6">
                                             <label asp-for="PolicyNumber" class="form-label"></label>
