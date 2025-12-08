@@ -45,3 +45,28 @@ CREATE NONCLUSTERED INDEX IX_Customers_AssignedEmployee
 CREATE NONCLUSTERED INDEX IX_Reminders_Employee_ReminderDate
     ON Reminders (EmployeeId, ReminderDateTime)
     INCLUDE (IsShown);
+
+CREATE TABLE Products (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(200) NOT NULL,
+    Description NVARCHAR(1000) NULL,
+    CommissionType NVARCHAR(50) NOT NULL,
+    CommissionValue DECIMAL(18,2) NOT NULL,
+    CommissionNotes NVARCHAR(500) NULL,
+    CreatedOn DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    UpdatedOn DATETIME2 NULL
+);
+
+CREATE TABLE ProductDocuments (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    ProductId INT NOT NULL REFERENCES Products(Id) ON DELETE CASCADE,
+    FileName NVARCHAR(300) NOT NULL,
+    OriginalFileName NVARCHAR(300) NOT NULL,
+    ContentType NVARCHAR(150) NOT NULL,
+    FilePath NVARCHAR(500) NOT NULL,
+    FileSize BIGINT NOT NULL,
+    UploadedOn DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
+CREATE NONCLUSTERED INDEX IX_ProductDocuments_ProductId
+    ON ProductDocuments (ProductId);

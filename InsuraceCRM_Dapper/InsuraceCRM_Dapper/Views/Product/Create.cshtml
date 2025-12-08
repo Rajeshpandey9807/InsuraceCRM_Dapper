@@ -1,0 +1,27 @@
+@model ProductFormViewModel
+@{
+    ViewData["Title"] = "Add Product";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0">Add Product</h1>
+    <a asp-action="Index" class="btn btn-link text-decoration-none">&larr; Back to list</a>
+</div>
+
+<form asp-action="Create" method="post" enctype="multipart/form-data" class="product-form">
+    @Html.AntiForgeryToken()
+    <partial name="_ProductForm" model="Model" />
+
+    <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Save Product</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+</form>
+
+<partial name="_DocumentPreviewModal" />
+
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/products.js" asp-append-version="true"></script>
+}
