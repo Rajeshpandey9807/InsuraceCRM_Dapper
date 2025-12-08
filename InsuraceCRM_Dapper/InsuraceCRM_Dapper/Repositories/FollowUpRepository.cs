@@ -28,13 +28,7 @@ public class FollowUpRepository : IFollowUpRepository
                 NextReminderDateTime,
                 ReminderRequired,
                 IsConverted,
-                ConversionReason,
-                SoldProductId,
-                SoldProductName,
-                TicketSize,
-                TenureInYears,
-                PolicyNumber,
-                PolicyEnforceDate)
+                ConversionReason)
             VALUES (
                 @CustomerId,
                 @FollowUpDate,
@@ -46,13 +40,7 @@ public class FollowUpRepository : IFollowUpRepository
                 @NextReminderDateTime,
                 @ReminderRequired,
                 @IsConverted,
-                @ConversionReason,
-                @SoldProductId,
-                @SoldProductName,
-                @TicketSize,
-                @TenureInYears,
-                @PolicyNumber,
-                @PolicyEnforceDate);
+                @ConversionReason);
             SELECT CAST(SCOPE_IDENTITY() as int);";
 
         using var connection = await _connectionFactory.CreateConnectionAsync();
@@ -72,13 +60,7 @@ public class FollowUpRepository : IFollowUpRepository
                 NextReminderDateTime = @NextReminderDateTime,
                 ReminderRequired = @ReminderRequired,
                 IsConverted = @IsConverted,
-                ConversionReason = @ConversionReason,
-                SoldProductId = @SoldProductId,
-                SoldProductName = @SoldProductName,
-                TicketSize = @TicketSize,
-                TenureInYears = @TenureInYears,
-                PolicyNumber = @PolicyNumber,
-                PolicyEnforceDate = @PolicyEnforceDate
+                ConversionReason = @ConversionReason
             WHERE Id = @Id;";
 
         using var connection = await _connectionFactory.CreateConnectionAsync();
@@ -94,7 +76,17 @@ public class FollowUpRepository : IFollowUpRepository
 
     public async Task<FollowUp?> GetByIdAsync(int id)
     {
-        const string sql = "SELECT * FROM FollowUps WHERE Id = @Id;";
+        const string sql = @"
+            SELECT f.*,
+                   sp.SoldProductId,
+                   sp.SoldProductName,
+                   sp.TicketSize,
+                   sp.TenureInYears,
+                   sp.PolicyNumber,
+                   sp.PolicyEnforceDate
+            FROM FollowUps f
+            LEFT JOIN SoldProductDetails sp ON sp.FollowUpId = f.Id
+            WHERE f.Id = @Id;";
         using var connection = await _connectionFactory.CreateConnectionAsync();
         return await connection.QuerySingleOrDefaultAsync<FollowUp>(sql, new { Id = id });
     }
@@ -102,9 +94,17 @@ public class FollowUpRepository : IFollowUpRepository
     public async Task<IEnumerable<FollowUp>> GetByCustomerIdAsync(int customerId)
     {
         const string sql = @"
-            SELECT * FROM FollowUps
-            WHERE CustomerId = @CustomerId
-            ORDER BY FollowUpDate DESC;";
+            SELECT f.*,
+                   sp.SoldProductId,
+                   sp.SoldProductName,
+                   sp.TicketSize,
+                   sp.TenureInYears,
+                   sp.PolicyNumber,
+                   sp.PolicyEnforceDate
+            FROM FollowUps f
+            LEFT JOIN SoldProductDetails sp ON sp.FollowUpId = f.Id
+            WHERE f.CustomerId = @CustomerId
+            ORDER BY f.FollowUpDate DESC;";
 
         using var connection = await _connectionFactory.CreateConnectionAsync();
         return await connection.QueryAsync<FollowUp>(sql, new { CustomerId = customerId });
