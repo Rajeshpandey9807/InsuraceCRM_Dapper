@@ -145,3 +145,18 @@ body {
     transform: translateX(-100%);
   }
 }
+
+.product-table ul {
+  max-height: 12rem;
+  overflow-y: auto;
+  padding-left: 0;
+  margin-bottom: 0;
+}
+
+.product-form .card {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+#documentPreviewFrame {
+  background-color: #f8f9fa;
+}

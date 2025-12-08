@@ -1,0 +1,96 @@
+@model ProductFormViewModel
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <label asp-for="Name" class="form-label fw-semibold"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="CommissionType" class="form-label fw-semibold"></label>
+                <select asp-for="CommissionType" class="form-select">
+                    <option value="Percentage">Percentage</option>
+                    <option value="Flat">Flat</option>
+                    <option value="Tiered">Tiered</option>
+                </select>
+                <span asp-validation-for="CommissionType" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="CommissionValue" class="form-label fw-semibold"></label>
+                <div class="input-group">
+                    <input asp-for="CommissionValue" class="form-control" type="number" step="0.01" min="0" />
+                    <span class="input-group-text">
+                        @if (string.Equals(Model.CommissionType, "Percentage", System.StringComparison.OrdinalIgnoreCase))
+                        {
+                            @("%")
+                        }
+                        else
+                        {
+                            @("₹")
+                        }
+                    </span>
+                </div>
+                <span asp-validation-for="CommissionValue" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="CommissionNotes" class="form-label fw-semibold"></label>
+                <textarea asp-for="CommissionNotes" class="form-control" rows="2"></textarea>
+                <span asp-validation-for="CommissionNotes" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Description" class="form-label fw-semibold"></label>
+                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+        </div>
+
+        <hr class="my-4" />
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold" for="productDocuments">Product Documents</label>
+            <input asp-for="NewDocuments" id="productDocuments" class="form-control" type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" multiple />
+            <small class="text-muted d-block mt-1">Accepted types: pdf, doc, docx, png, jpg up to 20 MB each.</small>
+            <span asp-validation-for="NewDocuments" class="text-danger"></span>
+        </div>
+
+        @if (Model.ExistingDocuments?.Any() == true)
+        {
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Document</th>
+                            <th class="text-nowrap">Uploaded</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var document in Model.ExistingDocuments)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@document.OriginalFileName</div>
+                                    <div class="text-muted small">@((document.FileSize / 1024).ToString("N0")) KB</div>
+                                </td>
+                                <td class="text-nowrap">@document.UploadedOn.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td>
+                                <td class="text-end">
+                                    <div class="d-flex flex-wrap gap-2 justify-content-end">
+                                        <a class="btn btn-outline-primary btn-sm" href="@Url.Action("PreviewDocument", "Product", new { documentId = document.Id })" data-document-preview="@Url.Action("PreviewDocument", "Product", new { documentId = document.Id })" data-document-name="@document.OriginalFileName">
+                                            Review
+                                        </a>
+                                        <form asp-action="DeleteDocument" asp-route-documentId="@document.Id" asp-route-productId="@Model.Id" method="post" class="d-inline" onsubmit="return confirm('Delete this document?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

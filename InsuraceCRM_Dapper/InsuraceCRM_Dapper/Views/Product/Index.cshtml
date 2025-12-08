@@ -1,0 +1,141 @@
+@model ProductListViewModel
+@{
+    ViewData["Title"] = "Product Master";
+}
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+        <h1 class="h3 mb-1">Product Master</h1>
+        <p class="text-muted mb-0">Keep product collateral and commission details in sync.</p>
+    </div>
+    @if (Model.CanManage)
+    {
+        <a asp-action="Create" class="btn btn-primary">Add Product</a>
+    }
+</div>
+
+@if (TempData["ProductSuccess"] is string successMessage)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @successMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (!Model.Products.Any())
+{
+    <div class="text-center py-5 border rounded-3 bg-light-subtle">
+        <h5 class="fw-semibold">No products yet</h5>
+        <p class="text-muted">Start by creating your first product to upload documents and commission info.</p>
+        @if (Model.CanManage)
+        {
+            <a asp-action="Create" class="btn btn-primary btn-sm">Create Product</a>
+        }
+    </div>
+}
+else
+{
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0 product-table">
+                <thead class="table-light">
+                    <tr>
+                        <th>Product</th>
+                        <th>Commission</th>
+                        <th>Documents</th>
+                        <th class="text-end"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var product in Model.Products)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">@product.Name</div>
+                                @if (!string.IsNullOrWhiteSpace(product.Description))
+                                {
+                                    <div class="text-muted small">@product.Description</div>
+                                }
+                            </td>
+                            <td>
+                                <div class="fw-semibold">
+                                    @product.CommissionValue
+                                    @if (string.Equals(product.CommissionType, "Percentage", System.StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        @("%")
+                                    }
+                                    else
+                                    {
+                                        @("₹")
+                                    }
+                                </div>
+                                <div class="text-muted small">@product.CommissionType</div>
+                                @if (!string.IsNullOrWhiteSpace(product.CommissionNotes))
+                                {
+                                    <div class="text-muted small">@product.CommissionNotes</div>
+                                }
+                            </td>
+                            <td>
+                                @if (product.Documents?.Any() == true)
+                                {
+                                    <ul class="list-unstyled mb-0">
+                                        @foreach (var document in product.Documents)
+                                        {
+                                            <li class="d-flex align-items-center justify-content-between gap-2 py-1 border-bottom">
+                                                <span class="text-truncate">@document.OriginalFileName</span>
+                                                <div class="d-flex flex-wrap gap-2 justify-content-end">
+                                                    <button type="button"
+                                                            class="btn btn-outline-primary btn-sm"
+                                                            data-document-preview="@Url.Action("PreviewDocument", new { documentId = document.Id })"
+                                                            data-document-name="@document.OriginalFileName">
+                                                        Review
+                                                    </button>
+                                                    @if (Model.CanManage)
+                                                    {
+                                                        <form asp-action="DeleteDocument"
+                                                              asp-route-documentId="@document.Id"
+                                                              asp-route-productId="@product.Id"
+                                                              method="post"
+                                                              class="d-inline"
+                                                              onsubmit="return confirm('Delete this document?');">
+                                                            @Html.AntiForgeryToken()
+                                                            <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                                                        </form>
+                                                    }
+                                                </div>
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-light">No documents</span>
+                                }
+                            </td>
+                            <td class="text-end text-nowrap">
+                                <div class="d-flex gap-2 justify-content-end flex-wrap">
+                                    <a class="btn btn-outline-secondary btn-sm" asp-action="Edit" asp-route-id="@product.Id">Details</a>
+                                    @if (Model.CanManage)
+                                    {
+                                        <form asp-action="Delete" asp-route-id="@product.Id" method="post" class="d-inline" onsubmit="return confirm('Delete this product?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<partial name="_DocumentPreviewModal" />
+
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/products.js" asp-append-version="true"></script>
+}
