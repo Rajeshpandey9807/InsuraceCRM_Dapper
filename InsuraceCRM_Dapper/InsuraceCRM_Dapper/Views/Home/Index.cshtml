@@ -161,10 +161,6 @@
                             <tbody>
                                 @foreach (var reminder in reminders)
                                 {
-                                    <tr>
-                                        <td>
-                                            <div class="fw-semibold">@reminder.CustomerName</div>
-                                            <div class="text-muted small">@(!string.IsNullOrWhiteSpace(reminder.CustomerMobileNumber) ? reminder.CustomerMobileNumber : "—")</div>
                                     var statusColor = customer.Status switch
                                     {
                                         "Converted" => "bg-emerald-500/20 text-emerald-200 border-emerald-400/40",
