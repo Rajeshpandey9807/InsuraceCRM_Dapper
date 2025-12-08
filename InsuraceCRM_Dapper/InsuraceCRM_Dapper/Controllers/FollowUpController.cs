@@ -3,6 +3,7 @@ using InsuraceCRM_Dapper.Models;
 using InsuraceCRM_Dapper.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 using System.Security.Claims;
 
 namespace InsuraceCRM_Dapper.Controllers;
@@ -87,6 +88,51 @@ public class FollowUpController : Controller
 
         await _followUpService.CreateFollowUpAsync(followUp, employeeId.Value);
         return RedirectToAction(nameof(History), new { customerId = viewModel.CustomerId });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddFromList(FollowUpFormViewModel viewModel)
+    {
+        var customer = await _customerService.GetCustomerByIdAsync(viewModel.CustomerId);
+        if (customer is null)
+        {
+            return NotFound(new { message = "Customer not found." });
+        }
+
+        var currentUser = await GetCurrentUserAsync();
+        if (currentUser is null || !CanAccessCustomer(customer, currentUser))
+        {
+            return Forbid();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState
+                .Where(entry => entry.Value?.Errors.Count > 0)
+                .SelectMany(entry => entry.Value!.Errors.Select(error => error.ErrorMessage))
+                .ToArray();
+
+            return BadRequest(new { errors });
+        }
+
+        var employeeId = customer.AssignedEmployeeId;
+        if (employeeId is null)
+        {
+            return BadRequest(new
+            {
+                errors = new[] { "Customer must be assigned to an employee before recording follow-ups." }
+            });
+        }
+
+        var followUp = MapFollowUp(viewModel);
+        await _followUpService.CreateFollowUpAsync(followUp, employeeId.Value);
+
+        return Ok(new
+        {
+            message = "Follow-up recorded successfully.",
+            historyUrl = Url.Action(nameof(History), new { customerId = viewModel.CustomerId })
+        });
     }
 
     [HttpGet]
