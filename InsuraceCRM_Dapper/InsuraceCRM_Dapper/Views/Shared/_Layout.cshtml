@@ -6,13 +6,17 @@
     <title>@ViewData["Title"] - Insurance CRM</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @RenderSection("HeadContent", required: false)
 </head>
 @{
     var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    var extraBodyClass = ViewData["BodyClass"] as string ?? string.Empty;
+    var baseBodyClass = isAuthenticated ? "has-side-nav" : string.Empty;
+    var bodyClass = $"{baseBodyClass} {extraBodyClass}".Trim();
 }
-<body class="@(isAuthenticated ? "has-side-nav" : string.Empty)">
+<body class="@bodyClass">
     <header class="top-bar navbar navbar-dark bg-primary shadow-sm">
         <div class="container-fluid d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-2">
