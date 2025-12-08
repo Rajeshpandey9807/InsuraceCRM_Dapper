@@ -25,9 +25,19 @@ CREATE TABLE FollowUps (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     CustomerId INT NOT NULL REFERENCES Customers(Id),
     FollowUpDate DATE NOT NULL,
+    InsuranceType NVARCHAR(100) NULL,
+    Budget DECIMAL(18,2) NULL,
+    HasExistingPolicy BIT NOT NULL DEFAULT 0,
     FollowUpNote NVARCHAR(1000) NULL,
     FollowUpStatus NVARCHAR(100) NULL,
-    NextReminderDateTime DATETIME2 NULL
+    NextReminderDateTime DATETIME2 NULL,
+    ReminderRequired BIT NOT NULL DEFAULT 0,
+    IsConverted BIT NULL,
+    ConversionReason NVARCHAR(500) NULL,
+    SoldProductName NVARCHAR(200) NULL,
+    TicketSize DECIMAL(18,2) NULL,
+    PolicyNumber NVARCHAR(100) NULL,
+    PolicyEnforceDate DATE NULL
 );
 
 CREATE TABLE Reminders (

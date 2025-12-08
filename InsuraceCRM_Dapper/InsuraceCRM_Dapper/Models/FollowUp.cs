@@ -34,4 +34,15 @@ public class FollowUp
 
     [StringLength(500)]
     public string? ConversionReason { get; set; }
+
+    [StringLength(200)]
+    public string? SoldProductName { get; set; }
+
+    [Range(0, double.MaxValue)]
+    public decimal? TicketSize { get; set; }
+
+    [StringLength(100)]
+    public string? PolicyNumber { get; set; }
+
+    public DateTime? PolicyEnforceDate { get; set; }
 }
