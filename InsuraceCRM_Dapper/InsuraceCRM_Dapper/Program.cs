@@ -36,6 +36,7 @@ builder.Services.AddScoped<IFollowUpRepository, FollowUpRepository>();
 builder.Services.AddScoped<IReminderRepository, ReminderRepository>();
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<ISoldProductDetailRepository, SoldProductDetailRepository>();
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
@@ -43,6 +44,7 @@ builder.Services.AddScoped<IFollowUpService, FollowUpService>();
 builder.Services.AddScoped<IReminderService, ReminderService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<ISoldProductDetailService, SoldProductDetailService>();
 
 var app = builder.Build();
 
