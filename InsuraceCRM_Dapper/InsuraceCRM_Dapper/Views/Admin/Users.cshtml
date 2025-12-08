@@ -28,6 +28,7 @@
                 <h4 class="card-title mb-4">Create User</h4>
                 <form asp-action="CreateUser" method="post" novalidate>
                     @Html.AntiForgeryToken()
+                    <input type="hidden" name="includeInactive" value="@Model.IncludeInactive" />
                     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                     <div class="mb-3">
@@ -95,10 +96,42 @@
     <div class="col-lg-8">
         <div class="card shadow-sm">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="card-title mb-0">Existing Users</h4>
-                    <span class="badge bg-light text-dark">@Model.Users.Count() total</span>
+                <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
+                    <div>
+                        <h4 class="card-title mb-1">Existing Users</h4>
+                        <div class="text-muted small">
+                            Active @Model.ActiveCount
+                            <span class="mx-1">•</span>
+                            Inactive @Model.InactiveCount
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <form asp-action="Users" method="get" class="d-flex align-items-center">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       role="switch"
+                                       id="toggleInactive"
+                                       name="includeInactive"
+                                       value="true"
+                                       @(Model.IncludeInactive ? "checked" : null)
+                                       onchange="this.form.submit()" />
+                                <label class="form-check-label ms-2" for="toggleInactive">Show inactive</label>
+                            </div>
+                        </form>
+                        <div class="btn-group">
+                            <a asp-action="ExportUsers"
+                               asp-route-format="excel"
+                               asp-route-includeInactive="@Model.IncludeInactive"
+                               class="btn btn-sm btn-outline-success">Export Excel</a>
+                            <a asp-action="ExportUsers"
+                               asp-route-format="pdf"
+                               asp-route-includeInactive="@Model.IncludeInactive"
+                               class="btn btn-sm btn-outline-danger">Export PDF</a>
+                        </div>
+                    </div>
                 </div>
+                <span class="badge bg-light text-dark">@Model.Users.Count() shown</span>
                 @if (!Model.Users.Any())
                 {
                     <div class="alert alert-info mb-0">
@@ -148,6 +181,7 @@
                                                   method="post"
                                                   class="d-inline">
                                                 @Html.AntiForgeryToken()
+                                                <input type="hidden" name="includeInactive" value="@Model.IncludeInactive" />
                                                 <input type="hidden" name="id" value="@user.Id" />
                                                 <input type="hidden" name="activate" value="@(user.IsActive ? "false" : "true")" />
                                                 <button type="submit"

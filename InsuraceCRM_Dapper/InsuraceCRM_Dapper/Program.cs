@@ -7,8 +7,10 @@ using InsuraceCRM_Dapper.Repositories;
 using InsuraceCRM_Dapper.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
+using QuestPDF.Infrastructure;
 
 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 

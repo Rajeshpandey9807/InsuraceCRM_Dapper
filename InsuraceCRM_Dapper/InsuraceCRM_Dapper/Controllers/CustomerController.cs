@@ -14,6 +14,10 @@ using System.Security.Claims;
 using CsvHelper;
 using ExcelDataReader;
 using ExcelDataReader.DataSet;
+using ClosedXML.Excel;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace InsuraceCRM_Dapper.Controllers;
 
@@ -115,6 +119,28 @@ public class CustomerController : Controller
         var viewModel = await BuildCustomerListViewModelAsync(currentUser);
         return View(viewModel);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> Export(string format = "excel")
+    {
+        var currentUser = await GetCurrentUserAsync();
+        if (currentUser is null)
+        {
+            return Challenge();
+        }
+
+        var viewModel = await BuildCustomerListViewModelAsync(currentUser);
+        var customers = viewModel.Customers.ToList();
+        var normalizedFormat = format?.Trim().ToLowerInvariant();
+
+        return normalizedFormat switch
+        {
+            "excel" => File(GenerateCustomersExcel(customers), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"customers-{DateTime.UtcNow:yyyyMMddHHmmss}.xlsx"),
+            "pdf" => File(GenerateCustomersPdf(customers), "application/pdf", $"customers-{DateTime.UtcNow:yyyyMMddHHmmss}.pdf"),
+            _ => BadRequest("Unsupported export format.")
+        };
+    }
+
     public async Task<IEnumerable<Customer>> GetAllCustomers()
     {
         var customer = await _customerService.GetAllCustomersAsync();
@@ -346,6 +372,111 @@ public class CustomerController : Controller
             SelectedCustomerIds = selectedIds,
             SelectedEmployeeId = selectedEmployeeId
         };
+    }
+
+    private static byte[] GenerateCustomersExcel(IReadOnlyCollection<Customer> customers)
+    {
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Customers");
+
+        var headers = new[]
+        {
+            "Name",
+            "Mobile",
+            "Location",
+            "Insurance Type",
+            "Income",
+            "Source of Income",
+            "Family Members",
+            "Assigned To"
+        };
+
+        for (var column = 0; column < headers.Length; column++)
+        {
+            worksheet.Cell(1, column + 1).Value = headers[column];
+            worksheet.Cell(1, column + 1).Style.Font.Bold = true;
+        }
+
+        var row = 2;
+        foreach (var customer in customers)
+        {
+            worksheet.Cell(row, 1).Value = customer.Name;
+            worksheet.Cell(row, 2).Value = customer.MobileNumber;
+            worksheet.Cell(row, 3).Value = customer.Location;
+            worksheet.Cell(row, 4).Value = customer.InsuranceType ?? "-";
+            worksheet.Cell(row, 5).Value = customer.Income.HasValue ? customer.Income.Value : "-";
+            worksheet.Cell(row, 6).Value = customer.SourceOfIncome ?? "-";
+            worksheet.Cell(row, 7).Value = customer.FamilyMembers.HasValue ? customer.FamilyMembers.Value : "-";
+            worksheet.Cell(row, 8).Value = customer.AssignedEmployeeName ?? "Unassigned";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
+    }
+
+    private static byte[] GenerateCustomersPdf(IReadOnlyCollection<Customer> customers)
+    {
+        byte[] pdfBytes = Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Margin(40);
+                page.Header()
+                    .Text("Customer Details Report")
+                    .FontSize(20)
+                    .SemiBold()
+                    .FontColor(Colors.Blue.Darken2);
+
+                page.Content().Table(table =>
+                {
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.RelativeColumn(2);
+                        columns.RelativeColumn(2);
+                        columns.RelativeColumn(2);
+                        columns.RelativeColumn(2);
+                        columns.RelativeColumn(1.5f);
+                        columns.RelativeColumn(2);
+                    });
+
+                    table.Header(header =>
+                    {
+                        header.Cell().Element(CellStyle).Text("Name").SemiBold();
+                        header.Cell().Element(CellStyle).Text("Mobile").SemiBold();
+                        header.Cell().Element(CellStyle).Text("Location").SemiBold();
+                        header.Cell().Element(CellStyle).Text("Insurance").SemiBold();
+                        header.Cell().Element(CellStyle).Text("Income").SemiBold();
+                        header.Cell().Element(CellStyle).Text("Assigned To").SemiBold();
+                    });
+
+                    foreach (var customer in customers)
+                    {
+                        table.Cell().Element(CellStyle).Text(customer.Name);
+                        table.Cell().Element(CellStyle).Text(customer.MobileNumber);
+                        table.Cell().Element(CellStyle).Text(customer.Location);
+                        table.Cell().Element(CellStyle).Text(customer.InsuranceType ?? "-");
+                        var incomeDisplay = customer.Income.HasValue ? customer.Income.Value.ToString("N2", CultureInfo.InvariantCulture) : "-";
+                        table.Cell().Element(CellStyle).Text(incomeDisplay);
+                        table.Cell().Element(CellStyle).Text(customer.AssignedEmployeeName ?? "Unassigned");
+                    }
+                });
+
+                page.Footer()
+                    .AlignCenter()
+                    .Text($"Generated on {DateTime.UtcNow:dd MMM yyyy HH:mm} UTC")
+                    .FontSize(10)
+                    .FontColor(Colors.Grey.Darken1);
+            });
+        }).GeneratePdf();
+
+        return pdfBytes;
+
+        static IContainer CellStyle(IContainer container) =>
+            container.PaddingVertical(4).PaddingHorizontal(2);
     }
 
     private ImportResult ParseCustomersFromFile(IFormFile file)
