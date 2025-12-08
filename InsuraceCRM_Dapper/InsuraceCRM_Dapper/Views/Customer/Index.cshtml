@@ -172,6 +172,13 @@
                             <td class="text-end">
                                 <div class="btn-group btn-group-sm" role="group">
                                     <a asp-controller="FollowUp" asp-action="History" asp-route-customerId="@customer.Id" class="btn btn-info">History</a>
+                                    <a asp-controller="SoldProductDetail"
+                                       asp-action="Index"
+                                       asp-route-customerId="@customer.Id"
+                                       asp-route-customerName="@customer.Name"
+                                       class="btn btn-outline-dark">
+                                        Sales
+                                    </a>
                                     <a asp-controller="FollowUp"
                                        asp-action="Add"
                                        asp-route-customerId="@customer.Id"
