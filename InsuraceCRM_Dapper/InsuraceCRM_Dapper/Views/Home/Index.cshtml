@@ -1,450 +1,196 @@
 @model InsuraceCRM_Dapper.ViewModels.DashboardViewModel
+@using InsuraceCRM_Dapper.ViewModels
 @using System.Linq
 @using System.Collections.Generic
 
 @{
     ViewData["Title"] = "Dashboard";
-    ViewData["BodyClass"] = "modern-dashboard";
 
-    var reminders = Model?.TodaysReminders?.ToList() ?? new List<ReminderViewModel>();
-    var insuranceTypes = new[] { "Life", "Health", "Auto", "Travel" };
-    var statuses = new[] { "Active", "Pending", "Follow-up", "Converted" };
-    var agents = new[] { "Sarah Lin", "Noah Patel", "Priya Shah", "Daniel Reed" };
+    var reminders = Model?.TodaysReminders?
+        .OrderBy(r => r.ReminderDateTime)
+        .Take(5)
+        .ToList() ?? new List<ReminderViewModel>();
 
-    var conversionRate = Model?.AssignedCustomerCount > 0
-        ? Math.Round(Math.Min(100, (double)(Model!.TodaysCallCount) / Model.AssignedCustomerCount * 100), 1)
-        : 0;
-
-    var recentCustomers = reminders.Any()
-        ? reminders.Select((reminder, index) =>
-            (
-                Name: reminder.CustomerName,
-                Phone: string.IsNullOrWhiteSpace(reminder.CustomerMobileNumber) ? "—" : reminder.CustomerMobileNumber,
-                InsuranceType: string.IsNullOrWhiteSpace(reminder.Note) ? insuranceTypes[index % insuranceTypes.Length] : reminder.Note!,
-                Agent: agents[index % agents.Length],
-                Status: statuses[index % statuses.Length]
-            )).ToList()
-        : Enumerable.Range(0, 5)
-            .Select(index =>
-                (
-                    Name: $"Aurora Client {index + 1}",
-                    Phone: "(555) 012-34" + index.ToString("00"),
-                    InsuranceType: insuranceTypes[index % insuranceTypes.Length],
-                    Agent: agents[index % agents.Length],
-                    Status: statuses[index % statuses.Length]
-                ))
-            .ToList();
+    var assignedCustomers = Model?.AssignedCustomerCount ?? 0;
+    var todaysCalls = Model?.TodaysCallCount ?? 0;
+    var todaysReminders = Model?.TodaysReminderCount ?? reminders.Count;
+    var completionRate = todaysReminders == 0
+        ? 0
+        : (int)Math.Round(Math.Min(100, (double)todaysCalls / todaysReminders * 100));
+    var pendingReminders = Math.Max(0, todaysReminders - todaysCalls);
 }
 
-@section HeadContent {
-    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            corePlugins: {
-                preflight: false
-            },
-            theme: {
-                extend: {
-                    colors: {
-                        base: '#0B0F1A',
-                        primary: '#6366F1',
-                        secondary: '#8B5CF6'
-                    },
-                    boxShadow: {
-                        neon: '0 25px 65px rgba(99, 102, 241, 0.35)'
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif']
-                    }
-                }
-            }
-        };
-    </script>
-    <style>
-        body.modern-dashboard {
-            background-color: #0B0F1A;
-        }
-
-        body.modern-dashboard .top-bar,
-        body.modern-dashboard footer,
-        body.modern-dashboard .side-nav,
-        body.modern-dashboard .side-nav-overlay {
-            display: none !important;
-        }
-
-        body.modern-dashboard .content-area {
-            margin-left: 0;
-        }
-
-        body.modern-dashboard .content-inner {
-            padding: 0;
-        }
-
-        body.modern-dashboard main.pb-3 {
-            padding-bottom: 0 !important;
-        }
-
-        .glass-surface {
-            background: rgba(15, 23, 42, 0.78);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(28px);
-            box-shadow: 0 35px 80px rgba(8, 11, 23, 0.55);
-        }
-
-        .modern-dashboard ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-
-        .modern-dashboard ::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, #6366F1 0%, #8B5CF6 100%);
-            border-radius: 999px;
-        }
-    </style>
-}
-
-<div class="crm-dashboard-shell modern-dashboard relative isolate min-h-screen overflow-hidden bg-[#0B0F1A] text-white">
-    <div class="pointer-events-none absolute inset-0">
-        <div class="absolute -left-32 top-12 h-72 w-72 rounded-full bg-[#6366F1]/30 blur-3xl"></div>
-        <div class="absolute bottom-0 right-[-10%] h-96 w-96 rounded-full bg-[#8B5CF6]/20 blur-3xl"></div>
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <h2 class="mb-1">Dashboard</h2>
+        <p class="text-muted mb-0">Track assigned customers, sales calls, and reminders in one place.</p>
     </div>
+    <div class="text-end">
+        <div class="text-muted small">Last refreshed @DateTime.UtcNow.ToLocalTime():MMM d, yyyy h:mm tt</div>
+        <div class="btn-group mt-2" role="group">
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Refresh</a>
+            <a asp-controller="Reminder" asp-action="Today" class="btn btn-sm btn-primary">Add Reminder</a>
+        </div>
+    </div>
+</div>
 
-    <div class="relative flex min-h-screen flex-col lg:flex-row">
-        <aside id="crm-sidebar" class="glass-surface relative z-10 hidden w-full max-w-xs flex-shrink-0 transform border-r border-white/5 px-6 py-8 transition-all duration-300 lg:block">
-            <div class="flex items-center gap-3">
-                <div class="rounded-2xl bg-gradient-to-br from-[#6366F1] to-[#8B5CF6] p-3 shadow-neon">
-                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5">
-                        <path d="M4 7h16M4 12h10M4 17h7" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase text-muted small">Assigned customers</span>
+                    <span class="badge bg-light text-dark">Live</span>
                 </div>
-                <div>
-                    <p class="text-sm tracking-[0.3em] text-white/70">INSURANCE</p>
-                    <p class="text-xl font-semibold">HoloCRM</p>
+                <h3 class="display-6 fw-semibold mb-0">@assignedCustomers</h3>
+                <p class="text-muted small mb-3">Active customers currently assigned across the team.</p>
+                <a asp-controller="Customer" asp-action="Index" class="btn btn-sm btn-outline-primary">View customers</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase text-muted small">Sales calls today</span>
+                    <span class="badge bg-success">@todaysCalls</span>
+                </div>
+                <h3 class="display-6 fw-semibold mb-0">@todaysCalls</h3>
+                <p class="text-muted small mb-3">Follow-ups and sales conversations logged so far today.</p>
+                <div class="progress" role="progressbar" aria-label="Sales progress" aria-valuenow="@Math.Min(100, todaysCalls * 5)" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-bar bg-success" style="width: @Math.Min(100, todaysCalls * 5)%"></div>
                 </div>
             </div>
-
-            <nav class="mt-10 space-y-2">
-                <a href="@Url.Action("Index", "Home")" class="group flex items-center gap-3 rounded-2xl border border-[#6366F1]/50 bg-white/5 px-4 py-3 text-sm font-medium text-white shadow-neon transition duration-300 hover:-translate-x-1 hover:border-[#8B5CF6]/60">
-                    <span class="rounded-xl bg-white/5 p-2 text-primary transition duration-300 group-hover:text-secondary">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
-                            <path d="M3 10.5 12 4l9 6.5" stroke-linecap="round" stroke-linejoin="round" />
-                            <path d="M5 12v8h14v-8" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                    </span>
-                    Dashboard
-                </a>
-                <a asp-controller="Customer" asp-action="Index" class="group flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm font-medium text-white/80 transition duration-300 hover:-translate-x-1 hover:border-white/20 hover:text-white">
-                    <span class="rounded-xl bg-white/5 p-2 text-white/60 transition duration-300 group-hover:text-secondary">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
-                            <path d="M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" />
-                            <path d="M4 20a8 8 0 0 1 16 0" stroke-linecap="round" />
-                        </svg>
-                    </span>
-                    Customers
-                </a>
-                <a href="javascript:void(0)" class="group flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm font-medium text-white/80 transition duration-300 hover:-translate-x-1 hover:border-white/20 hover:text-white">
-                    <span class="rounded-xl bg-white/5 p-2 text-white/60 transition duration-300 group-hover:text-secondary">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
-                            <path d="M4 17v-4a2 2 0 0 1 2-2h13" stroke-linecap="round" stroke-linejoin="round" />
-                            <path d="M10 7h10v10" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                    </span>
-                    Leads
-                </a>
-                <a asp-controller="FollowUp" asp-action="History" class="group flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm font-medium text-white/80 transition duration-300 hover:-translate-x-1 hover:border-white/20 hover:text-white">
-                    <span class="rounded-xl bg-white/5 p-2 text-white/60 transition duration-300 group-hover:text-secondary">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
-                            <path d="M5 12h14" stroke-linecap="round" />
-                            <path d="M12 5v14" stroke-linecap="round" />
-                        </svg>
-                    </span>
-                    Follow-ups
-                </a>
-                <a asp-controller="Reminder" asp-action="Today" class="group flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm font-medium text-white/80 transition duration-300 hover:-translate-x-1 hover:border-white/20 hover:text-white">
-                    <span class="rounded-xl bg-white/5 p-2 text-white/60 transition duration-300 group-hover:text-secondary">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
-                            <path d="M8 7v2m8-2v2" stroke-linecap="round" />
-                            <rect width="16" height="16" x="4" y="5" rx="2" />
-                            <path d="M4 11h16" />
-                        </svg>
-                    </span>
-                    Reminders
-                </a>
-                <a href="javascript:void(0)" class="group flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm font-medium text-white/80 transition duration-300 hover:-translate-x-1 hover:border-white/20 hover:text-white">
-                    <span class="rounded-xl bg-white/5 p-2 text-white/60 transition duration-300 group-hover:text-secondary">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
-                            <path d="M4 4h16v6H4z" stroke-linecap="round" stroke-linejoin="round" />
-                            <path d="M9 20H5a1 1 0 0 1-1-1v-4h5zm0 0h6a4 4 0 0 0 4-4v-2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                    </span>
-                    Reports
-                </a>
-                <a asp-controller="Admin" asp-action="ManageRoles" class="group flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm font-medium text-white/80 transition duration-300 hover:-translate-x-1 hover:border-white/20 hover:text-white">
-                    <span class="rounded-xl bg-white/5 p-2 text-white/60 transition duration-300 group-hover:text-secondary">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="3" />
-                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4" />
-                            <path d="M15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9" />
-                            <path d="M9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15" />
-                        </svg>
-                    </span>
-                    Settings
-                </a>
-            </nav>
-
-            <div class="mt-10 rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-white/0 p-5">
-                <p class="text-sm font-semibold text-white">Need insights?</p>
-                <p class="mt-1 text-xs text-white/70">Generate performance reports in a single click.</p>
-                <a href="javascript:void(0)" class="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#6366F1] via-[#8B5CF6] to-[#6366F1] px-4 py-2 text-sm font-semibold text-white shadow-neon transition hover:scale-[1.02]">
-                    Run report
-                </a>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase text-muted small">Today's reminders</span>
+                    <span class="badge bg-warning text-dark">@todaysReminders planned</span>
+                </div>
+                <h3 class="display-6 fw-semibold mb-0">@todaysReminders</h3>
+                <p class="text-muted small mb-3">Reminders that still need attention before end of day.</p>
+                <div class="d-flex justify-content-between text-muted small">
+                    <span>Pending</span>
+                    <strong>@pendingReminders</strong>
+                </div>
             </div>
-        </aside>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase text-muted small">Reminder completion</span>
+                    <span class="badge bg-info text-dark">@completionRate%</span>
+                </div>
+                <h3 class="display-6 fw-semibold mb-1">@completionRate%</h3>
+                <p class="text-muted small mb-3">Share of planned reminders already covered by calls.</p>
+                <div class="progress" role="progressbar" aria-label="Reminder completion" aria-valuenow="@completionRate" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-bar bg-info" style="width: @completionRate%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-        <div class="flex flex-1 flex-col">
-            <header class="glass-surface relative z-10 flex flex-col gap-4 border-b border-white/5 px-4 py-4 backdrop-blur-xl sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-                <div class="flex items-center gap-3">
-                    <button id="crm-sidebar-toggle" class="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 p-2 text-white transition duration-300 hover:border-[#6366F1]/60 hover:text-[#8B5CF6] lg:hidden">
-                        <svg class="h-5 w-5" stroke="currentColor" fill="none" stroke-width="1.6" viewBox="0 0 24 24">
-                            <path d="M4 7h16M4 12h16M4 17h16" stroke-linecap="round" />
-                        </svg>
-                    </button>
-                    <div>
-                        <p class="text-sm text-white/60">Today</p>
-                        <h1 class="text-2xl font-semibold tracking-tight">Performance Dashboard</h1>
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="mb-0">Sales report</h5>
+                    <span class="badge bg-light text-dark">Today</span>
+                </div>
+                <p class="text-muted small mb-4">Snapshot of how today’s calls stack up against scheduled reminders.</p>
+
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span>Planned customer touches</span>
+                        <strong>@todaysReminders</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span>Sales / follow-up calls logged</span>
+                        <strong>@todaysCalls</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span>Remaining reminders</span>
+                        <strong>@pendingReminders</strong>
+                    </li>
+                </ul>
+
+                <div class="mt-4">
+                    <div class="d-flex justify-content-between text-muted small mb-1">
+                        <span>Completion toward plan</span>
+                        <strong>@completionRate%</strong>
+                    </div>
+                    <div class="progress" role="progressbar" aria-valuenow="@completionRate" aria-valuemin="0" aria-valuemax="100">
+                        <div class="progress-bar bg-primary" style="width: @completionRate%"></div>
                     </div>
                 </div>
-                <div class="flex flex-1 flex-col gap-3 lg:flex-row lg:items-center lg:justify-end">
-                    <div class="relative w-full lg:max-w-md">
-                        <span class="pointer-events-none absolute inset-y-0 left-4 flex items-center text-white/40">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
-                                <circle cx="11" cy="11" r="7" />
-                                <path d="M16.5 16.5 20 20" stroke-linecap="round" />
-                            </svg>
-                        </span>
-                        <input type="text" placeholder="Search customers, leads, agents..." class="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-11 pr-4 text-sm text-white placeholder:text-white/40 focus:border-[#6366F1]/60 focus:outline-none focus:ring-2 focus:ring-[#6366F1]/40 transition duration-300" />
-                    </div>
-                    <div class="flex items-center justify-end gap-3">
-                        <button class="rounded-2xl border border-white/10 bg-white/5 p-3 text-white/70 transition duration-300 hover:border-[#6366F1]/60 hover:text-white">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
-                                <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5" stroke-linecap="round" stroke-linejoin="round" />
-                                <path d="M10 21h4" stroke-linecap="round" />
-                            </svg>
-                        </button>
-                        <button class="relative rounded-2xl border border-white/10 bg-white/5 p-3 text-white transition duration-300 hover:border-[#6366F1]/60">
-                            <span class="absolute -top-1 -right-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#F97316] text-[10px] font-bold text-white shadow-lg">3</span>
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
-                                <path d="m15 17-3 3-3-3M12 4v14" stroke-linecap="round" stroke-linejoin="round" />
-                            </svg>
-                        </button>
-                        <button class="rounded-2xl border border-white/10 bg-gradient-to-r from-[#6366F1] via-[#8B5CF6] to-[#6366F1] px-4 py-3 text-sm font-semibold shadow-neon transition duration-300 hover:shadow-[0_20px_60px_rgba(99,102,241,0.45)]">
-                            Add Reminder
-                        </button>
-                        <div class="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
-                            <div class="h-10 w-10 rounded-2xl border border-white/20 bg-gradient-to-br from-[#6366F1] to-[#8B5CF6]"></div>
-                            <div>
-                                <p class="text-sm font-semibold">Alex Morgan</p>
-                                <p class="text-xs text-white/50">Senior Manager</p>
-                            </div>
-                        </div>
-                    </div>
+
+                <div class="alert alert-info mt-4 mb-0" role="alert">
+                    Keep logging every interaction so the team can see real-time sales momentum.
                 </div>
-            </header>
-
-            <main class="relative z-0 flex-1 px-4 py-6 sm:px-6 lg:px-10">
-                <div class="grid gap-6 lg:grid-cols-4">
-                    <article class="glass-surface group rounded-2xl border border-white/10 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#6366F1]/60 hover:shadow-neon">
-                        <div class="flex items-center justify-between">
-                            <p class="text-sm uppercase tracking-[0.3em] text-white/60">Total Customers</p>
-                            <span class="rounded-xl bg-white/5 px-3 py-1 text-xs text-white/70">Live</span>
-                        </div>
-                        <div class="mt-6 flex items-baseline gap-3">
-                            <p class="text-4xl font-bold">@Model?.AssignedCustomerCount</p>
-                            <span class="text-sm text-emerald-300">+8% vs last week</span>
-                        </div>
-                        <div class="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-                            <span class="block h-full w-4/5 rounded-full bg-gradient-to-r from-[#6366F1] to-[#8B5CF6]"></span>
-                        </div>
-                    </article>
-                    <article class="glass-surface group rounded-2xl border border-white/10 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#6366F1]/60 hover:shadow-neon">
-                        <div class="flex items-center justify-between">
-                            <p class="text-sm uppercase tracking-[0.3em] text-white/60">Active Leads</p>
-                            <span class="rounded-xl bg-white/5 px-3 py-1 text-xs text-white/70">Realtime</span>
-                        </div>
-                        <div class="mt-6 flex items-baseline gap-3">
-                            <p class="text-4xl font-bold">@Model?.TodaysCallCount</p>
-                            <span class="text-sm text-emerald-300">+12 since morning</span>
-                        </div>
-                        <div class="mt-4 flex items-center gap-3 text-xs text-white/50">
-                            <span class="inline-flex items-center gap-1 rounded-full border border-emerald-400/40 px-2 py-1 text-emerald-200">
-                                <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.354-9.854a.5.5 0 00-.708-.708L9 11.086 7.354 9.44a.5.5 0 00-.708.707l2 2a.5.5 0 00.708 0l4-4z" clip-rule="evenodd" />
-                                </svg>
-                                On target
-                            </span>
-                            SLA 92%
-                        </div>
-                    </article>
-                    <article class="glass-surface group rounded-2xl border border-white/10 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#6366F1]/60 hover:shadow-neon">
-                        <div class="flex items-center justify-between">
-                            <p class="text-sm uppercase tracking-[0.3em] text-white/60">Today’s Follow-ups</p>
-                            <span class="rounded-xl bg-white/5 px-3 py-1 text-xs text-white/70">@Model?.TodaysReminderCount planned</span>
-                        </div>
-                        <div class="mt-6 flex items-baseline gap-3">
-                            <p class="text-4xl font-bold">@Model?.TodaysReminderCount</p>
-                            <span class="text-sm text-orange-300">+3 priority</span>
-                        </div>
-                        <div class="mt-4">
-                            <div class="flex items-center justify-between text-xs text-white/50">
-                                <span>Completed</span>
-                                <span>68%</span>
-                            </div>
-                            <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-                                <span class="block h-full w-2/3 rounded-full bg-gradient-to-r from-[#F97316] to-[#FB7185]"></span>
-                            </div>
-                        </div>
-                    </article>
-                    <article class="glass-surface group rounded-2xl border border-white/10 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#6366F1]/60 hover:shadow-neon">
-                        <div class="flex items-center justify-between">
-                            <p class="text-sm uppercase tracking-[0.3em] text-white/60">Conversion Rate</p>
-                            <span class="rounded-xl bg-white/5 px-3 py-1 text-xs text-white/70">vs target 42%</span>
-                        </div>
-                        <div class="mt-6 flex items-baseline gap-3">
-                            <p class="text-4xl font-bold">@conversionRate.ToString("0.0")%</p>
-                            <span class="inline-flex items-center gap-1 text-sm text-emerald-300">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
-                                    <path d="M5 12l4-4 4 4 6-6" stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                                +4.5%
-                            </span>
-                        </div>
-                        <p class="mt-3 text-xs text-white/60">Based on calls closed today.</p>
-                    </article>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="mb-0">Today's reminders</h5>
+                    <a asp-controller="Reminder" asp-action="Today" class="btn btn-sm btn-outline-secondary">Manage reminders</a>
                 </div>
+                <p class="text-muted small mb-3">The next few conversations that need attention.</p>
 
-                <section class="mt-8 space-y-6 rounded-3xl border border-white/5 bg-white/5 p-6 backdrop-blur-xl shadow-[0_20px_80px_rgba(8,11,23,0.6)]">
-                    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <p class="text-xs uppercase tracking-[0.5em] text-white/50">Pipeline</p>
-                            <h2 class="text-2xl font-semibold">Recent Customers</h2>
-                            <p class="text-sm text-white/60">Live view of the most recent customer engagements.</p>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <button class="rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:border-[#6366F1]/40 hover:text-white">Export</button>
-                            <a asp-controller="Customer" asp-action="Index" class="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#6366F1] via-[#8B5CF6] to-[#6366F1] px-5 py-2.5 text-sm font-semibold text-white shadow-neon transition hover:shadow-[0_25px_70px_rgba(99,102,241,0.5)]">
-                                View all
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
-                                    <path d="M5 12h14M13 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-white/10 text-left text-sm">
-                            <thead class="text-white/60">
+                @if (reminders.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
                                 <tr>
-                                    <th class="px-4 py-3 font-semibold">Name</th>
-                                    <th class="px-4 py-3 font-semibold">Phone</th>
-                                    <th class="px-4 py-3 font-semibold">Insurance Type</th>
-                                    <th class="px-4 py-3 font-semibold">Assigned Agent</th>
-                                    <th class="px-4 py-3 font-semibold">Status</th>
+                                    <th>Customer</th>
+                                    <th>Time</th>
+                                    <th>Notes</th>
+                                    <th class="text-end">Action</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-white/5">
-                                @foreach (var customer in recentCustomers)
+                            <tbody>
+                                @foreach (var reminder in reminders)
                                 {
-                                    @{
-                                        var statusColor = customer.Status switch
-                                        {
-                                            "Converted" => "bg-emerald-500/20 text-emerald-200 border-emerald-400/40",
-                                            "Active" => "bg-blue-500/20 text-blue-200 border-blue-400/40",
-                                            "Follow-up" => "bg-amber-500/20 text-amber-200 border-amber-400/40",
-                                            _ => "bg-rose-500/20 text-rose-200 border-rose-400/40"
-                                        };
-                                    }
-                                    <tr class="transition duration-200 hover:bg-white/5">
-                                        <td class="px-4 py-4">
-                                            <div class="flex items-center gap-3">
-                                                <div class="h-10 w-10 rounded-2xl border border-white/10 bg-white/5"></div>
-                                                <div>
-                                                    <p class="font-semibold">@customer.Name</p>
-                                                    <p class="text-xs text-white/50">Last touch @DateTime.UtcNow.ToLocalTime():h:mm tt</p>
-                                                </div>
-                                            </div>
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">@reminder.CustomerName</div>
+                                            <div class="text-muted small">@(!string.IsNullOrWhiteSpace(reminder.CustomerMobileNumber) ? reminder.CustomerMobileNumber : "—")</div>
                                         </td>
-                                        <td class="px-4 py-4 text-white/80">@customer.Phone</td>
-                                        <td class="px-4 py-4">
-                                            <span class="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">@customer.InsuranceType</span>
+                                        <td>
+                                            @reminder.ReminderDateTime.ToLocalTime().ToString("h:mm tt")
                                         </td>
-                                        <td class="px-4 py-4 text-white/80">@customer.Agent</td>
-                                        <td class="px-4 py-4">
-                                            <span class="@statusColor inline-flex items-center gap-1 rounded-2xl border px-3 py-1 text-xs font-semibold">
-                                                <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
-                                                @customer.Status
-                                            </span>
+                                        <td class="text-muted">@(!string.IsNullOrWhiteSpace(reminder.Note) ? reminder.Note : "No notes yet")</td>
+                                        <td class="text-end">
+                                            <a asp-controller="FollowUp"
+                                               asp-action="Add"
+                                               asp-route-customerId="@reminder.CustomerId"
+                                               class="btn btn-sm btn-outline-primary">
+                                                Log follow-up
+                                            </a>
                                         </td>
                                     </tr>
                                 }
                             </tbody>
                         </table>
                     </div>
-                </section>
-            </main>
+                }
+                else
+                {
+                    <div class="alert alert-light text-muted mb-0" role="alert">
+                        No reminders scheduled for the rest of the day.
+                    </div>
+                }
+            </div>
         </div>
     </div>
-
-    <div id="crm-sidebar-overlay" class="pointer-events-none fixed inset-0 z-0 bg-black/60 opacity-0 transition duration-300 lg:hidden"></div>
 </div>
-
-@section Scripts {
-    <script>
-        (function () {
-            const sidebar = document.getElementById('crm-sidebar');
-            const toggle = document.getElementById('crm-sidebar-toggle');
-            const overlay = document.getElementById('crm-sidebar-overlay');
-
-            if (!sidebar || !toggle || !overlay) {
-                return;
-            }
-
-            const openSidebar = () => {
-                sidebar.classList.remove('hidden');
-                sidebar.classList.add('fixed', 'top-0', 'left-0', 'h-full');
-                overlay.classList.remove('pointer-events-none');
-                overlay.classList.add('pointer-events-auto');
-                requestAnimationFrame(() => {
-                    sidebar.style.transform = 'translateX(0)';
-                    overlay.style.opacity = '1';
-                });
-            };
-
-            const closeSidebar = () => {
-                sidebar.style.transform = 'translateX(-100%)';
-                overlay.style.opacity = '0';
-                overlay.classList.add('pointer-events-none');
-                setTimeout(() => {
-                    sidebar.classList.add('hidden');
-                    sidebar.classList.remove('fixed', 'top-0', 'left-0', 'h-full');
-                    sidebar.style.transform = '';
-                }, 250);
-            };
-
-            toggle.addEventListener('click', openSidebar);
-            overlay.addEventListener('click', closeSidebar);
-
-            window.addEventListener('resize', () => {
-                if (window.innerWidth >= 1024) {
-                    sidebar.classList.remove('hidden');
-                    sidebar.classList.remove('fixed', 'top-0', 'left-0', 'h-full');
-                    sidebar.style.transform = '';
-                    overlay.style.opacity = '0';
-                    overlay.classList.add('pointer-events-none');
-                } else {
-                    sidebar.classList.add('hidden');
-                }
-            });
-        })();
-    </script>
-}
