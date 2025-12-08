@@ -5,7 +5,6 @@
     var rawImportErrors = TempData["CustomerImportErrors"] as string;
     var importErrorLines = rawImportErrors?
         .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-    var followUpModalModel = new FollowUpFormViewModel();
 }
 
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
@@ -26,11 +25,6 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }
-
-<div class="alert alert-success d-none" role="alert" id="followUpSuccessBanner">
-    <span id="followUpSuccessMessage"></span>
-    <a href="#" id="followUpSuccessHistoryLink" class="alert-link ms-2 d-none" target="_blank" rel="noopener">View history</a>
-</div>
 
 @if (importErrorLines?.Length > 0)
 {
@@ -172,17 +166,12 @@
                             <td class="text-end">
                                 <div class="btn-group btn-group-sm" role="group">
                                     <a asp-controller="FollowUp" asp-action="History" asp-route-customerId="@customer.Id" class="btn btn-info">History</a>
-                                    <button type="button"
-                                            class="btn btn-success"
-                                            data-follow-up-button
-                                            data-customer-id="@customer.Id"
-                                            data-customer-name="@customer.Name"
-                                            data-customer-mobile="@customer.MobileNumber"
-                                            data-customer-location="@customer.Location"
-                                            data-customer-insurance="@(customer.InsuranceType ?? string.Empty)"
-                                            data-assigned-name="@(customer.AssignedEmployeeName ?? string.Empty)">
+                                    <a asp-controller="FollowUp"
+                                       asp-action="Add"
+                                       asp-route-customerId="@customer.Id"
+                                       class="btn btn-success">
                                         Follow-Up
-                                    </button>
+                                    </a>
                                     @if (Model.CanEdit)
                                     {
                                         <a asp-action="Edit" asp-route-id="@customer.Id" class="btn btn-secondary">Edit</a>
@@ -202,188 +191,3 @@
     </div>
 </div>
 
-@await Html.PartialAsync("_FollowUpModal", followUpModalModel)
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-    <script>
-        (() => {
-            const modalElement = document.getElementById('followUpModal');
-            const bootstrapModal = window.bootstrap && modalElement ? new window.bootstrap.Modal(modalElement) : null;
-            if (!bootstrapModal) {
-                return;
-            }
-
-            const form = document.getElementById('followUpForm');
-            const buttons = document.querySelectorAll('[data-follow-up-button]');
-            const customerNameInput = document.getElementById('followUpCustomerName');
-            const customerMobileInput = document.getElementById('followUpCustomerMobile');
-            const customerLocationInput = document.getElementById('followUpCustomerLocation');
-            const assignedToInput = document.getElementById('followUpAssignedTo');
-            const historyLink = document.getElementById('followUpHistoryLink');
-            const hiddenCustomerId = document.getElementById('CustomerId');
-            const insuranceTypeSelect = document.getElementById('InsuranceType');
-            const budgetInput = document.getElementById('Budget');
-            const existingPolicySelect = document.getElementById('HasExistingPolicy');
-            const followUpDateInput = document.getElementById('FollowUpDate');
-            const followUpStatusSelect = document.getElementById('FollowUpStatus');
-            const followUpNoteInput = document.getElementById('FollowUpNote');
-            const reminderDateInput = document.getElementById('NextReminderDateTime');
-            const reminderRequiredSelect = document.getElementById('ReminderRequired');
-            const reminderWrapper = modalElement.querySelector('[data-reminder-wrapper]');
-            const convertedSelect = document.getElementById('IsConverted');
-            const conversionReasonInput = document.getElementById('ConversionReason');
-            const assignmentWarning = document.getElementById('followUpAssignmentWarning');
-            const inlineError = document.getElementById('followUpErrorAlert');
-            const inlineSuccess = document.getElementById('followUpInlineSuccess');
-            const submitButton = form?.querySelector('[data-follow-up-submit]');
-            const submitSpinner = form?.querySelector('[data-follow-up-spinner]');
-            const successBanner = document.getElementById('followUpSuccessBanner');
-            const successBannerMessage = document.getElementById('followUpSuccessMessage');
-            const successBannerHistoryLink = document.getElementById('followUpSuccessHistoryLink');
-
-            if (!form || !buttons.length || !hiddenCustomerId) {
-                return;
-            }
-
-            const formatDateOnly = () => {
-                const today = new Date();
-                const month = String(today.getMonth() + 1).padStart(2, '0');
-                const day = String(today.getDate()).padStart(2, '0');
-                return `${today.getFullYear()}-${month}-${day}`;
-            };
-
-            const buildHistoryUrl = (customerId) => customerId ? `/FollowUp/History?customerId=${customerId}` : '#';
-
-            const toggleReminderState = () => {
-                const requiresReminder = reminderRequiredSelect.value === 'true';
-                reminderDateInput.disabled = !requiresReminder;
-                if (!requiresReminder) {
-                    reminderDateInput.value = '';
-                    reminderWrapper?.classList.add('opacity-50');
-                } else {
-                    reminderWrapper?.classList.remove('opacity-50');
-                }
-            };
-
-            reminderRequiredSelect?.addEventListener('change', toggleReminderState);
-
-            const resetFormState = () => {
-                form.reset();
-                inlineError.classList.add('d-none');
-                inlineError.textContent = '';
-                inlineSuccess.classList.add('d-none');
-                inlineSuccess.textContent = '';
-                followUpDateInput.value = formatDateOnly();
-                followUpStatusSelect.value = '';
-                followUpNoteInput.value = '';
-                budgetInput.value = '';
-                reminderRequiredSelect.value = 'false';
-                reminderDateInput.value = '';
-                convertedSelect.value = '';
-                conversionReasonInput.value = '';
-                toggleReminderState();
-            };
-
-            const populateModal = (button) => {
-                resetFormState();
-                const customerId = button.dataset.customerId ?? '';
-                const historyUrl = buildHistoryUrl(customerId);
-                hiddenCustomerId.value = customerId;
-                customerNameInput.value = button.dataset.customerName ?? '';
-                customerMobileInput.value = button.dataset.customerMobile ?? '';
-                customerLocationInput.value = button.dataset.customerLocation ?? '';
-                assignedToInput.value = button.dataset.assignedName || 'Unassigned';
-                insuranceTypeSelect.value = button.dataset.customerInsurance ?? '';
-                historyLink?.setAttribute('href', historyUrl);
-
-                const isAssigned = Boolean(button.dataset.assignedName);
-                assignmentWarning.classList.toggle('d-none', isAssigned);
-            };
-
-            const showError = (message) => {
-                inlineError.textContent = message;
-                inlineError.classList.remove('d-none');
-            };
-
-            const showSuccess = (message, historyUrl) => {
-                inlineSuccess.textContent = message;
-                inlineSuccess.classList.remove('d-none');
-
-                if (successBanner && successBannerMessage) {
-                    successBannerMessage.textContent = message;
-                    successBanner.classList.remove('d-none');
-                    if (historyUrl && successBannerHistoryLink) {
-                        successBannerHistoryLink.classList.remove('d-none');
-                        successBannerHistoryLink.setAttribute('href', historyUrl);
-                    } else {
-                        successBannerHistoryLink?.classList.add('d-none');
-                    }
-                }
-            };
-
-            buttons.forEach((button) => {
-                button.addEventListener('click', () => {
-                    populateModal(button);
-                    bootstrapModal.show();
-                });
-            });
-
-            form.addEventListener('submit', async (event) => {
-                event.preventDefault();
-                inlineError.classList.add('d-none');
-                inlineError.textContent = '';
-                inlineSuccess.classList.add('d-none');
-                inlineSuccess.textContent = '';
-
-                submitButton.disabled = true;
-                submitSpinner?.classList.remove('d-none');
-
-                try {
-                    const response = await fetch(form.action, {
-                        method: 'POST',
-                        body: new FormData(form),
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    });
-
-                    if (!response.ok) {
-                        let errorMessage = 'Unable to save follow-up.';
-                        if (response.status === 400) {
-                            const payload = await response.json().catch(() => null);
-                            if (payload?.errors?.length) {
-                                errorMessage = payload.errors.join(' ');
-                            } else if (payload?.message) {
-                                errorMessage = payload.message;
-                            }
-                        } else if (response.status === 403) {
-                            errorMessage = "You don't have permission to update this customer.";
-                        } else if (response.status === 404) {
-                            errorMessage = 'Customer not found.';
-                        }
-
-                        showError(errorMessage);
-                        return;
-                    }
-
-                    const payload = await response.json().catch(() => ({}));
-                    const message = payload?.message ?? 'Follow-up saved.';
-                    const historyUrl = payload?.historyUrl ?? historyLink?.getAttribute('href');
-
-                    showSuccess(message, historyUrl);
-                    historyLink?.setAttribute('href', historyUrl ?? '#');
-
-                    setTimeout(() => {
-                        bootstrapModal.hide();
-                    }, 800);
-                } catch (error) {
-                    showError('Something went wrong while saving. Please try again.');
-                } finally {
-                    submitButton.disabled = false;
-                    submitSpinner?.classList.add('d-none');
-                }
-            });
-        })();
-    </script>
-}
