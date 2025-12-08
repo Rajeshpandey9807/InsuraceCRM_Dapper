@@ -9,4 +9,5 @@ public interface IFollowUpRepository
     Task DeleteAsync(int id);
     Task<FollowUp?> GetByIdAsync(int id);
     Task<IEnumerable<FollowUp>> GetByCustomerIdAsync(int customerId);
+    Task<IEnumerable<UserFollowUpDetail>> GetByEmployeeIdAsync(int employeeId);
 }

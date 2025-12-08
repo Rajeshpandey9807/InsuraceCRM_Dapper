@@ -109,4 +109,36 @@ public class FollowUpRepository : IFollowUpRepository
         using var connection = await _connectionFactory.CreateConnectionAsync();
         return await connection.QueryAsync<FollowUp>(sql, new { CustomerId = customerId });
     }
+
+    public async Task<IEnumerable<UserFollowUpDetail>> GetByEmployeeIdAsync(int employeeId)
+    {
+        const string sql = @"
+            SELECT f.Id AS FollowUpId,
+                   f.CustomerId,
+                   c.Name AS CustomerName,
+                   c.MobileNumber AS CustomerMobileNumber,
+                   c.Location AS CustomerLocation,
+                   f.FollowUpDate,
+                   f.InsuranceType,
+                   f.Budget,
+                   f.HasExistingPolicy,
+                   f.FollowUpStatus,
+                   f.FollowUpNote,
+                   f.NextReminderDateTime,
+                   f.ReminderRequired,
+                   f.IsConverted,
+                   sp.SoldProductName,
+                   sp.TicketSize,
+                   sp.TenureInYears,
+                   sp.PolicyNumber,
+                   sp.PolicyEnforceDate
+            FROM FollowUps f
+            INNER JOIN Customers c ON c.Id = f.CustomerId
+            LEFT JOIN SoldProductDetails sp ON sp.FollowUpId = f.Id
+            WHERE c.AssignedEmployeeId = @EmployeeId
+            ORDER BY f.FollowUpDate DESC, f.Id DESC;";
+
+        using var connection = await _connectionFactory.CreateConnectionAsync();
+        return await connection.QueryAsync<UserFollowUpDetail>(sql, new { EmployeeId = employeeId });
+    }
 }

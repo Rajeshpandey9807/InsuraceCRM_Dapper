@@ -1,0 +1,204 @@
+@using System.Linq
+@model UserInsightsViewModel
+@{
+    ViewData["Title"] = "User Insights";
+    var hasSelection = Model.HasSelection;
+    var selectedUserName = Model.SelectedUser?.FullName ?? "Select a user";
+}
+
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+    <div>
+        <h2 class="mb-1">User Insights</h2>
+        <p class="text-muted mb-0">
+            Review follow-up activity and sold policies recorded by each user. Only administrators can access this view.
+        </p>
+    </div>
+    <a asp-action="Users" class="btn btn-outline-secondary">Back to user management</a>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form asp-action="UserInsights" method="get" class="row g-3 align-items-end">
+            <div class="col-md-6">
+                <label for="userSelect" class="form-label">Choose a user</label>
+                <select class="form-select" id="userSelect" name="userId">
+                    <option value="">-- Select --</option>
+                    @foreach (var user in Model.Users)
+                    {
+                        <option value="@user.Id" @(Model.SelectedUserId == user.Id ? "selected" : null)>
+                            @user.FullName (@user.Role)
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">View insights</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (!hasSelection)
+{
+    <div class="alert alert-info">
+        Select a user to load their follow-ups and sold product details.
+    </div>
+}
+else
+{
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1">@selectedUserName</h4>
+                    <div class="text-muted">Role: @Model.SelectedUser!.Role &middot; Email: @Model.SelectedUser.Email</div>
+                </div>
+                <div class="d-flex gap-3">
+                    <div>
+                        <div class="text-muted small">Follow-ups recorded</div>
+                        <div class="fs-4 fw-semibold">@Model.FollowUpCount</div>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Sold policies</div>
+                        <div class="fs-4 fw-semibold">@Model.SoldProductCount</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-xl-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h5 class="mb-0">Follow-up activity</h5>
+                            <div class="text-muted small">Latest touchpoints across assigned customers.</div>
+                        </div>
+                        <span class="badge bg-light text-dark">@Model.FollowUpCount</span>
+                    </div>
+                    @if (Model.FollowUps.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Follow-up date</th>
+                                        <th>Customer</th>
+                                        <th>Status</th>
+                                        <th>Converted</th>
+                                        <th>Reminder</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var followUp in Model.FollowUps)
+                                    {
+                                        <tr>
+                                            <td>@followUp.FollowUpDate.ToString("yyyy-MM-dd")</td>
+                                            <td>
+                                                <div class="fw-semibold">@followUp.CustomerName</div>
+                                                <div class="text-muted small">@followUp.CustomerMobileNumber</div>
+                                            </td>
+                                            <td>@(string.IsNullOrWhiteSpace(followUp.FollowUpStatus) ? "-" : followUp.FollowUpStatus)</td>
+                                            <td>
+                                                @{
+                                                    var converted = followUp.IsConverted switch
+                                                    {
+                                                        true => "Yes",
+                                                        false => "No",
+                                                        _ => "Pending"
+                                                    };
+                                                }
+                                                @converted
+                                            </td>
+                                            <td>
+                                                @if (followUp.ReminderRequired && followUp.NextReminderDateTime.HasValue)
+                                                {
+                                                    <span class="badge bg-warning text-dark">
+                                                        @followUp.NextReminderDateTime.Value.ToString("dd MMM yyyy HH:mm")
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted small">No</span>
+                                                }
+                                            </td>
+                                            <td class="text-muted small text-break">
+                                                @(string.IsNullOrWhiteSpace(followUp.FollowUpNote) ? "-" : followUp.FollowUpNote)
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info mb-0">
+                            No follow-ups recorded for this user yet.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h5 class="mb-0">Sold product details</h5>
+                            <div class="text-muted small">Converted deals owned by this user.</div>
+                        </div>
+                        <span class="badge bg-light text-dark">@Model.SoldProductCount</span>
+                    </div>
+                    @if (Model.SoldProducts.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Customer</th>
+                                        <th>Product</th>
+                                        <th>Ticket Size</th>
+                                        <th>Policy #</th>
+                                        <th>Enforce Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var sale in Model.SoldProducts)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold">@sale.CustomerName</div>
+                                                <div class="text-muted small">@sale.CustomerMobileNumber</div>
+                                            </td>
+                                            <td>
+                                                <div class="fw-semibold">@sale.ProductName</div>
+                                                <div class="text-muted small">@sale.SoldProductName</div>
+                                            </td>
+                                            <td>@sale.TicketSize.ToString("N2")</td>
+                                            <td>@sale.PolicyNumber</td>
+                                            <td>@sale.PolicyEnforceDate.ToString("yyyy-MM-dd")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info mb-0">
+                            No sold product details recorded for this user.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

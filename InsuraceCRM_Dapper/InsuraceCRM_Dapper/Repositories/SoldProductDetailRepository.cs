@@ -79,7 +79,7 @@ END";
         return await connection.QueryAsync<SoldProductDetail>(sql, new { CustomerId = customerId });
     }
 
-    public async Task<IEnumerable<SoldProductDetailInfo>> GetAllWithDetailsAsync(int? customerId = null)
+    public async Task<IEnumerable<SoldProductDetailInfo>> GetAllWithDetailsAsync(int? customerId = null, int? employeeId = null)
     {
         const string sql = @"
             SELECT sp.Id,
@@ -103,9 +103,10 @@ END";
             INNER JOIN Products p ON p.Id = sp.SoldProductId
             LEFT JOIN FollowUps f ON f.Id = sp.FollowUpId
             WHERE (@CustomerId IS NULL OR sp.CustomerId = @CustomerId)
+              AND (@EmployeeId IS NULL OR c.AssignedEmployeeId = @EmployeeId)
             ORDER BY sp.PolicyEnforceDate DESC, sp.Id DESC;";
 
         using var connection = await _connectionFactory.CreateConnectionAsync();
-        return await connection.QueryAsync<SoldProductDetailInfo>(sql, new { CustomerId = customerId });
+        return await connection.QueryAsync<SoldProductDetailInfo>(sql, new { CustomerId = customerId, EmployeeId = employeeId });
     }
 }

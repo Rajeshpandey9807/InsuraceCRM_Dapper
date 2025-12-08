@@ -18,10 +18,17 @@ public class AdminController : Controller
 {
     private static readonly string[] AllowedRoles = { "Admin", "Manager", "Employee" };
     private readonly IUserService _userService;
+    private readonly IFollowUpService _followUpService;
+    private readonly ISoldProductDetailService _soldProductDetailService;
 
-    public AdminController(IUserService userService)
+    public AdminController(
+        IUserService userService,
+        IFollowUpService followUpService,
+        ISoldProductDetailService soldProductDetailService)
     {
         _userService = userService;
+        _followUpService = followUpService;
+        _soldProductDetailService = soldProductDetailService;
     }
 
     public async Task<IActionResult> ManageRoles()
@@ -368,5 +375,35 @@ public class AdminController : Controller
 
         static IContainer CellStyle(IContainer container) =>
             container.PaddingVertical(4).PaddingHorizontal(2);
+    }
+
+    public async Task<IActionResult> UserInsights(int? userId)
+    {
+        var users = (await _userService.GetAllUsersAsync())
+            .OrderBy(u => u.FullName)
+            .ToList();
+
+        var selectedUser = userId.HasValue
+            ? users.FirstOrDefault(u => u.Id == userId)
+            : null;
+
+        var followUps = selectedUser is null
+            ? Enumerable.Empty<UserFollowUpDetail>()
+            : await _followUpService.GetFollowUpsForEmployeeAsync(selectedUser.Id);
+
+        var soldProducts = selectedUser is null
+            ? Enumerable.Empty<SoldProductDetailInfo>()
+            : await _soldProductDetailService.GetAllWithDetailsAsync(employeeId: selectedUser.Id);
+
+        var viewModel = new UserInsightsViewModel
+        {
+            Users = users,
+            SelectedUserId = userId,
+            SelectedUser = selectedUser,
+            FollowUps = followUps,
+            SoldProducts = soldProducts
+        };
+
+        return View(viewModel);
     }
 }
