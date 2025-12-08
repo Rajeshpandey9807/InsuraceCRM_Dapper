@@ -13,4 +13,7 @@ public interface IUserService
     Task SetActiveStateAsync(int userId, bool isActive);
     Task EnsureDefaultAdminAsync();
     Task<IEnumerable<Role>> GetRolesAsync();
+    Task<int> CreateRoleAsync(Role role);
+    Task UpdateRoleNameAsync(Role role);
+    Task DeleteRoleAsync(int roleId);
 }

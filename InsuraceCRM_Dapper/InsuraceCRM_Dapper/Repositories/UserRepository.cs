@@ -29,9 +29,41 @@ public class UserRepository : IUserRepository
 
     public async Task<IEnumerable<Role>> GetRolesAsync()
     {
-        const string sql = "select RoleId,RoleName from Roles";
+        const string sql = "SELECT RoleId, RoleName FROM Roles ORDER BY RoleName;";
         using var connection = await _connectionFactory.CreateConnectionAsync();
-        return await connection.QueryAsync<Role>(sql).ContinueWith(t => t.Result.ToList());
+        return await connection.QueryAsync<Role>(sql);
+    }
+
+    public async Task<int> InsertRoleAsync(Role role)
+    {
+        const string sql = @"INSERT INTO Roles (RoleName)
+                             VALUES (@RoleName);
+                             SELECT CAST(SCOPE_IDENTITY() AS INT);";
+
+        using var connection = await _connectionFactory.CreateConnectionAsync();
+        return await connection.ExecuteScalarAsync<int>(sql, new { role.RoleName });
+    }
+
+    public async Task UpdateRoleNameAsync(Role role)
+    {
+        const string sql = "UPDATE Roles SET RoleName = @RoleName WHERE RoleId = @RoleId;";
+        using var connection = await _connectionFactory.CreateConnectionAsync();
+        await connection.ExecuteAsync(sql, new { role.RoleName, role.RoleId });
+    }
+
+    public async Task DeleteRoleAsync(int roleId)
+    {
+        const string sql = "DELETE FROM Roles WHERE RoleId = @RoleId;";
+        using var connection = await _connectionFactory.CreateConnectionAsync();
+        await connection.ExecuteAsync(sql, new { RoleId = roleId });
+    }
+
+    public async Task<bool> RoleHasUsersAsync(int roleId)
+    {
+        const string sql = "SELECT COUNT(1) FROM Users WHERE RoleId = @RoleId;";
+        using var connection = await _connectionFactory.CreateConnectionAsync();
+        var count = await connection.ExecuteScalarAsync<int>(sql, new { RoleId = roleId });
+        return count > 0;
     }
     public async Task UpdateAsync(User user)
     {
@@ -51,7 +83,7 @@ public class UserRepository : IUserRepository
 
     public async Task UpdateRoleAsync(int userId, int RoleId)
     {
-        const string sql = "UPDATE Users SET RoleId = @role WHERE Id = @UserId;";
+        const string sql = "UPDATE Users SET RoleId = @RoleId WHERE Id = @UserId;";
         using var connection = await _connectionFactory.CreateConnectionAsync();
         await connection.ExecuteAsync(sql, new { RoleId = RoleId, UserId = userId });
     }
@@ -72,7 +104,18 @@ public class UserRepository : IUserRepository
 
     public async Task<User?> GetByIdAsync(int id)
     {
-        const string sql = "SELECT * FROM Users WHERE Id = @Id;";
+        const string sql = @"
+            SELECT u.Id,
+                   u.FullName,
+                   u.Email,
+                   u.PasswordHash,
+                   u.Mobile,
+                   u.RoleId,
+                   r.RoleName AS Role,
+                   u.IsActive
+            FROM Users u
+            INNER JOIN Roles r ON u.RoleId = r.RoleId
+            WHERE u.Id = @Id;";
         using var connection = await _connectionFactory.CreateConnectionAsync();
         return await connection.QuerySingleOrDefaultAsync<User>(sql, new { Id = id });
     }
@@ -88,11 +131,18 @@ public class UserRepository : IUserRepository
     public async Task<IEnumerable<User>> GetAllAsync(bool includeInactive = false)
     {
         const string sql = @"
-            SELECT *
-            FROM Users
-            WHERE IsActive = 1
-            ORDER BY FullName;";
-
+            SELECT u.Id,
+                   u.FullName,
+                   u.Email,
+                   u.PasswordHash,
+                   u.Mobile,
+                   u.RoleId,
+                   r.RoleName AS Role,
+                   u.IsActive
+            FROM Users u
+            INNER JOIN Roles r ON u.RoleId = r.RoleId
+            WHERE (@IncludeInactive = 1) OR (u.IsActive = 1)
+            ORDER BY u.FullName;";
         using var connection = await _connectionFactory.CreateConnectionAsync();
         return await connection.QueryAsync<User>(sql, new { IncludeInactive = includeInactive });
     }

@@ -1,3 +1,4 @@
+using System;
 using InsuraceCRM_Dapper.Interfaces.Repositories;
 using InsuraceCRM_Dapper.Interfaces.Services;
 using InsuraceCRM_Dapper.Models;
@@ -36,6 +37,40 @@ public class UserService : IUserService
     public async Task<IEnumerable<Role>> GetRolesAsync()
     {
         return await _userRepository.GetRolesAsync();
+    }
+
+    public Task<int> CreateRoleAsync(Role role)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(role.RoleName);
+        role.RoleName = role.RoleName.Trim();
+        return _userRepository.InsertRoleAsync(role);
+    }
+
+    public Task UpdateRoleNameAsync(Role role)
+    {
+        if (role.RoleId <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(role.RoleId), "A valid role id is required.");
+        }
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(role.RoleName);
+        role.RoleName = role.RoleName.Trim();
+        return _userRepository.UpdateRoleNameAsync(role);
+    }
+
+    public async Task DeleteRoleAsync(int roleId)
+    {
+        if (roleId <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(roleId), "A valid role id is required.");
+        }
+
+        if (await _userRepository.RoleHasUsersAsync(roleId))
+        {
+            throw new InvalidOperationException("Cannot delete a role that is assigned to existing users.");
+        }
+
+        await _userRepository.DeleteRoleAsync(roleId);
     }
     public async Task<int> CreateUserAsync(User user, string password)
     {

@@ -1,51 +1,123 @@
 @model ManageRolesViewModel
 @{
     ViewData["Title"] = "Manage Roles";
+    var success = TempData["RoleMessage"] as string;
+    var error = TempData["RoleError"] as string;
 }
 
-<div class="card shadow-sm">
-    <div class="card-body">
-        <h4 class="card-title mb-4">Manage User Roles</h4>
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var user in Model.Users)
-                    {
-                        <tr>
-                            <td>@user.FullName</td>
-                            <td>@user.Email</td>
-                            <td>@user.Role</td>
-                            <td>
-                                <form asp-action="UpdateRole" method="post" class="d-flex align-items-center gap-2">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="userId" value="@user.Id" />
-                                 <select name="roleId"
-        class="form-control"
-        asp-items="Model.Roles.Select(r => new SelectListItem {
-            Value = r.RoleId.ToString(),
-            Text = r.RoleName
-        })">
-    <option value="">-- Select Role --</option>
-</select>
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h4 class="card-title mb-4">Assign Roles to Users</h4>
 
+                @if (!string.IsNullOrEmpty(success))
+                {
+                    <div class="alert alert-success" role="alert">@success</div>
+                }
+                @if (!string.IsNullOrEmpty(error))
+                {
+                    <div class="alert alert-danger" role="alert">@error</div>
+                }
 
-            
-     
-                                    <button type="submit" class="btn btn-sm btn-primary">Save</button>
-                                </form>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th style="width: 260px;">Role</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in Model.Users)
+                            {
+                                <tr>
+                                    <td>@user.FullName</td>
+                                    <td>@user.Email</td>
+                                    <td>
+                                        <form asp-action="UpdateRole" method="post" class="d-flex align-items-center gap-2">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="userId" value="@user.Id" />
+                                            <select name="roleId"
+                                                    class="form-select form-select-sm"
+                                                    required>
+                                                <option value="">-- Select Role --</option>
+                                                @foreach (var role in Model.Roles)
+                                                {
+                                                    <option value="@role.RoleId" selected="@(role.RoleId == user.RoleId ? "selected" : null)">
+                                                        @role.RoleName
+                                                    </option>
+                                                }
+                                            </select>
+                                            <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                                        </form>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">@user.Role</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Create a New Role</h5>
+                <form asp-action="CreateRole" method="post" class="d-flex gap-2">
+                    @Html.AntiForgeryToken()
+                    <input type="text" name="roleName" class="form-control" placeholder="Role name" required />
+                    <button type="submit" class="btn btn-success">Add</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Existing Roles</h5>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Role</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var role in Model.Roles)
+                            {
+                                <tr>
+                                    <td>
+                                        <form asp-action="EditRole" method="post" class="d-flex gap-2">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="roleId" value="@role.RoleId" />
+                                            <input type="text" name="roleName" value="@role.RoleName" class="form-control form-control-sm" required />
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">Save</button>
+                                        </form>
+                                    </td>
+                                    <td class="text-end">
+                                        <form asp-action="DeleteRole"
+                                              method="post"
+                                              onsubmit="return confirm('Are you sure you want to delete this role?');"
+                                              class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="roleId" value="@role.RoleId" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-muted small mb-0">Roles assigned to users cannot be deleted.</p>
+            </div>
         </div>
     </div>
 </div>

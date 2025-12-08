@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using InsuraceCRM_Dapper.Interfaces.Services;
 using InsuraceCRM_Dapper.Models;
@@ -34,14 +35,93 @@ public class AdminController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateRole(int userId, int roleId)
     {
-        //if (!AllowedRoles.Contains(role))
-        //{
-        //    ModelState.AddModelError(string.Empty, "Invalid role selection.");
-        //    return await ManageRoles();
-        //}
-      
-
         await _userService.UpdateRoleAsync(userId, roleId);
+        return RedirectToAction(nameof(ManageRoles));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateRole(string roleName)
+    {
+        if (string.IsNullOrWhiteSpace(roleName))
+        {
+            TempData["RoleError"] = "Role name is required.";
+            return RedirectToAction(nameof(ManageRoles));
+        }
+
+        var normalizedName = roleName.Trim();
+        var roles = await _userService.GetRolesAsync();
+        if (roles.Any(r => r.RoleName.Equals(normalizedName, StringComparison.OrdinalIgnoreCase)))
+        {
+            TempData["RoleError"] = $"Role '{normalizedName}' already exists.";
+            return RedirectToAction(nameof(ManageRoles));
+        }
+
+        await _userService.CreateRoleAsync(new Role { RoleName = normalizedName });
+        TempData["RoleMessage"] = $"Role '{normalizedName}' was created.";
+        return RedirectToAction(nameof(ManageRoles));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditRole(int roleId, string roleName)
+    {
+        if (roleId <= 0)
+        {
+            TempData["RoleError"] = "Invalid role identifier.";
+            return RedirectToAction(nameof(ManageRoles));
+        }
+
+        if (string.IsNullOrWhiteSpace(roleName))
+        {
+            TempData["RoleError"] = "Role name is required.";
+            return RedirectToAction(nameof(ManageRoles));
+        }
+
+        var normalizedName = roleName.Trim();
+        var roles = (await _userService.GetRolesAsync()).ToList();
+
+        if (!roles.Any(r => r.RoleId == roleId))
+        {
+            TempData["RoleError"] = "Role could not be found.";
+            return RedirectToAction(nameof(ManageRoles));
+        }
+
+        if (roles.Any(r => r.RoleId != roleId && r.RoleName.Equals(normalizedName, StringComparison.OrdinalIgnoreCase)))
+        {
+            TempData["RoleError"] = $"Role '{normalizedName}' already exists.";
+            return RedirectToAction(nameof(ManageRoles));
+        }
+
+        await _userService.UpdateRoleNameAsync(new Role { RoleId = roleId, RoleName = normalizedName });
+        TempData["RoleMessage"] = "Role was updated.";
+        return RedirectToAction(nameof(ManageRoles));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteRole(int roleId)
+    {
+        if (roleId <= 0)
+        {
+            TempData["RoleError"] = "Invalid role identifier.";
+            return RedirectToAction(nameof(ManageRoles));
+        }
+
+        try
+        {
+            await _userService.DeleteRoleAsync(roleId);
+            TempData["RoleMessage"] = "Role was deleted.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["RoleError"] = ex.Message;
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            TempData["RoleError"] = ex.Message;
+        }
+
         return RedirectToAction(nameof(ManageRoles));
     }
 
