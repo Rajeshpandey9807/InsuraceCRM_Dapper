@@ -21,4 +21,7 @@ public class SoldProductDetailService : ISoldProductDetailService
 
     public Task<IEnumerable<SoldProductDetail>> GetByCustomerIdAsync(int customerId) =>
         _repository.GetByCustomerIdAsync(customerId);
+
+    public Task<IEnumerable<SoldProductDetailInfo>> GetAllWithDetailsAsync() =>
+        _repository.GetAllWithDetailsAsync();
 }
