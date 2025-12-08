@@ -355,15 +355,13 @@
                             <tbody class="divide-y divide-white/5">
                                 @foreach (var customer in recentCustomers)
                                 {
-                                    @{
-                                        var statusColor = customer.Status switch
-                                        {
-                                            "Converted" => "bg-emerald-500/20 text-emerald-200 border-emerald-400/40",
-                                            "Active" => "bg-blue-500/20 text-blue-200 border-blue-400/40",
-                                            "Follow-up" => "bg-amber-500/20 text-amber-200 border-amber-400/40",
-                                            _ => "bg-rose-500/20 text-rose-200 border-rose-400/40"
-                                        };
-                                    }
+                                    var statusColor = customer.Status switch
+                                    {
+                                        "Converted" => "bg-emerald-500/20 text-emerald-200 border-emerald-400/40",
+                                        "Active" => "bg-blue-500/20 text-blue-200 border-blue-400/40",
+                                        "Follow-up" => "bg-amber-500/20 text-amber-200 border-amber-400/40",
+                                        _ => "bg-rose-500/20 text-rose-200 border-rose-400/40"
+                                    };
                                     <tr class="transition duration-200 hover:bg-white/5">
                                         <td class="px-4 py-4">
                                             <div class="flex items-center gap-3">
