@@ -1,4 +1,6 @@
+using System;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace InsuraceCRM_Dapper.ViewModels;
 
@@ -54,6 +56,9 @@ public class FollowUpFormViewModel
     [Display(Name = "Reason (if not converted)")]
     public string? ConversionReason { get; set; }
 
+    [Display(Name = "Sold Product")]
+    public int? SoldProductId { get; set; }
+
     [StringLength(200)]
     [Display(Name = "Sold Product")]
     public string? SoldProductName { get; set; }
@@ -62,6 +67,10 @@ public class FollowUpFormViewModel
     [Range(0, double.MaxValue, ErrorMessage = "Ticket size must be a positive value.")]
     public decimal? TicketSize { get; set; }
 
+    [Display(Name = "Tenure (years)")]
+    [Range(1, 5, ErrorMessage = "Tenure must be between 1 and 5 years.")]
+    public int? TenureInYears { get; set; }
+
     [StringLength(100)]
     [Display(Name = "Policy Number")]
     public string? PolicyNumber { get; set; }
@@ -69,4 +78,6 @@ public class FollowUpFormViewModel
     [Display(Name = "Policy Enforce Date")]
     [DataType(DataType.Date)]
     public DateTime? PolicyEnforceDate { get; set; }
+
+    public IEnumerable<SelectListItem> ProductOptions { get; set; } = Array.Empty<SelectListItem>();
 }

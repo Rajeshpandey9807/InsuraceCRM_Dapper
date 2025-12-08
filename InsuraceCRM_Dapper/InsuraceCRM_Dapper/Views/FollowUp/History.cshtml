@@ -33,6 +33,7 @@
                             <th>Converted</th>
                             <th>Product Sold</th>
                             <th>Ticket Size</th>
+                            <th>Tenure (years)</th>
                             <th>Policy #</th>
                             <th>Enforce Date</th>
                             <th>Reason</th>
@@ -64,6 +65,7 @@
                                 </td>
                                 <td>@(string.IsNullOrWhiteSpace(followUp.SoldProductName) ? "-" : followUp.SoldProductName)</td>
                                 <td>@(followUp.TicketSize.HasValue ? followUp.TicketSize.Value.ToString("N2") : "-")</td>
+                            <td>@(followUp.TenureInYears?.ToString() ?? "-")</td>
                                 <td>@(string.IsNullOrWhiteSpace(followUp.PolicyNumber) ? "-" : followUp.PolicyNumber)</td>
                                 <td>@(followUp.PolicyEnforceDate?.ToString("yyyy-MM-dd") ?? "-")</td>
                                 <td>@(string.IsNullOrWhiteSpace(followUp.ConversionReason) ? "-" : followUp.ConversionReason)</td>

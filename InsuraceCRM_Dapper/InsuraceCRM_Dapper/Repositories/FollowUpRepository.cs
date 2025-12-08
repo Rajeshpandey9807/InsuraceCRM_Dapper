@@ -29,8 +29,10 @@ public class FollowUpRepository : IFollowUpRepository
                 ReminderRequired,
                 IsConverted,
                 ConversionReason,
+                SoldProductId,
                 SoldProductName,
                 TicketSize,
+                TenureInYears,
                 PolicyNumber,
                 PolicyEnforceDate)
             VALUES (
@@ -45,8 +47,10 @@ public class FollowUpRepository : IFollowUpRepository
                 @ReminderRequired,
                 @IsConverted,
                 @ConversionReason,
+                @SoldProductId,
                 @SoldProductName,
                 @TicketSize,
+                @TenureInYears,
                 @PolicyNumber,
                 @PolicyEnforceDate);
             SELECT CAST(SCOPE_IDENTITY() as int);";
@@ -69,8 +73,10 @@ public class FollowUpRepository : IFollowUpRepository
                 ReminderRequired = @ReminderRequired,
                 IsConverted = @IsConverted,
                 ConversionReason = @ConversionReason,
+                SoldProductId = @SoldProductId,
                 SoldProductName = @SoldProductName,
                 TicketSize = @TicketSize,
+                TenureInYears = @TenureInYears,
                 PolicyNumber = @PolicyNumber,
                 PolicyEnforceDate = @PolicyEnforceDate
             WHERE Id = @Id;";
