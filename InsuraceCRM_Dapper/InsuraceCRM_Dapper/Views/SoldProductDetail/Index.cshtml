@@ -3,14 +3,54 @@
 @{
     ViewData["Title"] = "Sold Product Details";
     var items = Model.Details?.ToList() ?? new List<SoldProductDetailInfo>();
+    var filterLabel = Model.IsFiltered
+        ? (Model.FilteredCustomerName ?? $"Customer #{Model.FilteredCustomerId}")
+        : null;
+    var emptyMessage = Model.IsFiltered
+        ? "This customer does not have any sold product details yet."
+        : "No sold product details available yet.";
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h2 class="mb-0">Sold Product Details</h2>
-        <p class="text-muted mb-0">All converted sales mapped to customers and products.</p>
+        <p class="text-muted mb-0">
+            @(Model.IsFiltered
+                ? "Review the converted sales captured for this customer."
+                : "All converted sales mapped to customers and products.")
+        </p>
     </div>
+    @if (Model.IsFiltered)
+    {
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm">Show all sales</a>
+            @if (Model.FilteredCustomerId.HasValue)
+            {
+                <a asp-controller="Customer"
+                   asp-action="History"
+                   asp-route-customerId="@Model.FilteredCustomerId"
+                   class="btn btn-outline-primary btn-sm">
+                    Customer history
+                </a>
+            }
+        </div>
+    }
 </div>
+
+@if (Model.IsFiltered)
+{
+    <div class="alert alert-light border d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+        <div>
+            <div class="fw-semibold">@filterLabel</div>
+            <div class="text-muted small">Showing only this customer's converted policies.</div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-primary-subtle text-primary">
+                @items.Count item@(items.Count == 1 ? string.Empty : "s")
+            </span>
+        </div>
+    </div>
+}
 
 <div class="card shadow-sm">
     <div class="card-body">
@@ -66,7 +106,7 @@
         else
         {
             <div class="alert alert-info mb-0">
-                No sold product details available yet.
+                @emptyMessage
             </div>
         }
     </div>

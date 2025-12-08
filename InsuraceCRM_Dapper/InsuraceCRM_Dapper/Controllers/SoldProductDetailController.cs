@@ -1,7 +1,9 @@
 using InsuraceCRM_Dapper.Interfaces.Services;
+using InsuraceCRM_Dapper.Models;
 using InsuraceCRM_Dapper.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 
 namespace InsuraceCRM_Dapper.Controllers;
 
@@ -16,12 +18,22 @@ public class SoldProductDetailController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int? customerId = null, string? customerName = null)
     {
-        var details = await _soldProductDetailService.GetAllWithDetailsAsync();
+        var details = await _soldProductDetailService.GetAllWithDetailsAsync(customerId);
+        var detailList = details?.ToList() ?? new List<SoldProductDetailInfo>();
+        var resolvedName = customerName;
+
+        if (string.IsNullOrWhiteSpace(resolvedName) && customerId.HasValue)
+        {
+            resolvedName = detailList.FirstOrDefault()?.CustomerName;
+        }
+
         var viewModel = new SoldProductDetailListViewModel
         {
-            Details = details
+            Details = detailList,
+            FilteredCustomerId = customerId,
+            FilteredCustomerName = resolvedName
         };
 
         return View(viewModel);

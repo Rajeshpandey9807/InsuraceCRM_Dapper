@@ -10,6 +10,16 @@
     </div>
     <div>
         <a asp-action="Add" asp-route-customerId="@Model.Customer?.Id" class="btn btn-primary">Add Follow-up</a>
+        @if (Model.Customer?.Id is not null)
+        {
+            <a asp-controller="SoldProductDetail"
+               asp-action="Index"
+               asp-route-customerId="@Model.Customer.Id"
+               asp-route-customerName="@Model.Customer.Name"
+               class="btn btn-outline-dark">
+                Sold Products
+            </a>
+        }
         <a asp-controller="Customer" asp-action="Index" class="btn btn-secondary">Back</a>
     </div>
 </div>
