@@ -78,4 +78,33 @@ END";
         using var connection = await _connectionFactory.CreateConnectionAsync();
         return await connection.QueryAsync<SoldProductDetail>(sql, new { CustomerId = customerId });
     }
+
+    public async Task<IEnumerable<SoldProductDetailInfo>> GetAllWithDetailsAsync()
+    {
+        const string sql = @"
+            SELECT sp.Id,
+                   sp.CustomerId,
+                   c.Name AS CustomerName,
+                   c.MobileNumber AS CustomerMobileNumber,
+                   c.Location AS CustomerLocation,
+                   sp.FollowUpId,
+                   f.FollowUpDate,
+                   sp.SoldProductId AS ProductId,
+                   p.Name AS ProductName,
+                   sp.SoldProductName,
+                   sp.TicketSize,
+                   sp.TenureInYears,
+                   sp.PolicyNumber,
+                   sp.PolicyEnforceDate,
+                   sp.CreatedOn,
+                   sp.UpdatedOn
+            FROM SoldProductDetails sp
+            INNER JOIN Customers c ON c.Id = sp.CustomerId
+            INNER JOIN Products p ON p.Id = sp.SoldProductId
+            LEFT JOIN FollowUps f ON f.Id = sp.FollowUpId
+            ORDER BY sp.PolicyEnforceDate DESC, sp.Id DESC;";
+
+        using var connection = await _connectionFactory.CreateConnectionAsync();
+        return await connection.QueryAsync<SoldProductDetailInfo>(sql);
+    }
 }

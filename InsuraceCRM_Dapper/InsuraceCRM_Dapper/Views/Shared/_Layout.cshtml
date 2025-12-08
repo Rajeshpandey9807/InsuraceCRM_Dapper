@@ -49,6 +49,7 @@
                     <a class="nav-link side-nav-link @(currentController == "Home" ? "active" : string.Empty)" asp-controller="Home" asp-action="Index">Dashboard</a>
                     <a class="nav-link side-nav-link @(currentController == "Customer" && currentAction != "BulkAssign" ? "active" : string.Empty)" asp-controller="Customer" asp-action="Index">Customers</a>
                     <a class="nav-link side-nav-link @(currentController == "Product" ? "active" : string.Empty)" asp-controller="Product" asp-action="Index">Products</a>
+                    <a class="nav-link side-nav-link @(currentController == "SoldProductDetail" ? "active" : string.Empty)" asp-controller="SoldProductDetail" asp-action="Index">Sold Products</a>
                     @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
                     {
                         <a class="nav-link side-nav-link @(currentController == "Customer" && currentAction == "BulkAssign" ? "active" : string.Empty)" asp-controller="Customer" asp-action="BulkAssign">Bulk Assign</a>
