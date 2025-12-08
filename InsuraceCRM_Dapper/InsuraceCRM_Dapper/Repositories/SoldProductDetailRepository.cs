@@ -42,7 +42,8 @@ BEGIN
         TicketSize,
         TenureInYears,
         PolicyNumber,
-        PolicyEnforceDate)
+        PolicyEnforceDate,
+        CreatedBy)
     VALUES (
         @CustomerId,
         @FollowUpId,
@@ -51,7 +52,8 @@ BEGIN
         @TicketSize,
         @TenureInYears,
         @PolicyNumber,
-        @PolicyEnforceDate);
+        @PolicyEnforceDate,
+        @CreatedBy);
 
     SELECT CAST(SCOPE_IDENTITY() as int);
 END";
@@ -97,13 +99,16 @@ END";
                    sp.PolicyNumber,
                    sp.PolicyEnforceDate,
                    sp.CreatedOn,
-                   sp.UpdatedOn
+                   sp.UpdatedOn,
+                   sp.CreatedBy,
+                   u.FullName AS CreatedByName
             FROM SoldProductDetails sp
             INNER JOIN Customers c ON c.Id = sp.CustomerId
             INNER JOIN Products p ON p.Id = sp.SoldProductId
             LEFT JOIN FollowUps f ON f.Id = sp.FollowUpId
+            LEFT JOIN Users u ON u.Id = sp.CreatedBy
             WHERE (@CustomerId IS NULL OR sp.CustomerId = @CustomerId)
-              AND (@EmployeeId IS NULL OR c.AssignedEmployeeId = @EmployeeId)
+              AND (@EmployeeId IS NULL OR sp.CreatedBy = @EmployeeId)
             ORDER BY sp.PolicyEnforceDate DESC, sp.Id DESC;";
 
         using var connection = await _connectionFactory.CreateConnectionAsync();

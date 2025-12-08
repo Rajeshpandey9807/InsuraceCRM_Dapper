@@ -78,7 +78,8 @@ public class FollowUpService : IFollowUpService
                 TicketSize = followUp.TicketSize!.Value,
                 TenureInYears = followUp.TenureInYears!.Value,
                 PolicyNumber = followUp.PolicyNumber!,
-                PolicyEnforceDate = followUp.PolicyEnforceDate!.Value
+                PolicyEnforceDate = followUp.PolicyEnforceDate!.Value,
+                CreatedBy = followUp.CreatedBy
             };
 
             await _soldProductDetailService.UpsertAsync(detail);

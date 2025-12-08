@@ -70,6 +70,7 @@
                             <th scope="col">Enforce Date</th>
                             <th scope="col">Follow-up Date</th>
                             <th scope="col">Recorded On</th>
+                            <th scope="col">Recorded By</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -96,6 +97,15 @@
                                     <div class="text-muted small">
                                         @(detail.UpdatedOn.HasValue ? $"Updated {detail.UpdatedOn:yyyy-MM-dd}" : string.Empty)
                                     </div>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">
+                                        @(string.IsNullOrWhiteSpace(detail.CreatedByName) ? "Unknown" : detail.CreatedByName)
+                                    </div>
+                                    @if (detail.CreatedBy > 0)
+                                    {
+                                        <div class="text-muted small">User ID: @detail.CreatedBy</div>
+                                    }
                                 </td>
                             </tr>
                         }

@@ -49,4 +49,6 @@ public class FollowUp
     public string? PolicyNumber { get; set; }
 
     public DateTime? PolicyEnforceDate { get; set; }
+
+    public int CreatedBy { get; set; }
 }
