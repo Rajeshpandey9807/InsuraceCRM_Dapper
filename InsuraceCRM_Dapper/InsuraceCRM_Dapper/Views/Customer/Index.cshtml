@@ -170,28 +170,40 @@
                             <td>@(customer.FamilyMembers?.ToString() ?? "-")</td>
                             <td>@(customer.AssignedEmployeeName ?? "Unassigned")</td>
                             <td class="text-end">
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <a asp-controller="FollowUp" asp-action="History" asp-route-customerId="@customer.Id" class="btn btn-info">History</a>
+                                <div class="customer-actions d-flex flex-wrap justify-content-end gap-2">
+                                    <a asp-controller="FollowUp"
+                                       asp-action="History"
+                                       asp-route-customerId="@customer.Id"
+                                       class="btn btn-sm btn-info">
+                                        History
+                                    </a>
                                     <a asp-controller="SoldProductDetail"
                                        asp-action="Index"
                                        asp-route-customerId="@customer.Id"
                                        asp-route-customerName="@customer.Name"
-                                       class="btn btn-outline-dark">
+                                       class="btn btn-sm btn-outline-dark">
                                         Sales
                                     </a>
                                     <a asp-controller="FollowUp"
                                        asp-action="Add"
                                        asp-route-customerId="@customer.Id"
-                                       class="btn btn-success">
+                                       class="btn btn-sm btn-success">
                                         Follow-Up
                                     </a>
                                     @if (Model.CanEdit)
                                     {
-                                        <a asp-action="Edit" asp-route-id="@customer.Id" class="btn btn-secondary">Edit</a>
-                                        <a asp-action="AssignCustomer" asp-route-customerId="@customer.Id" class="btn btn-warning">Assign</a>
-                                        <form asp-action="Delete" asp-route-id="@customer.Id" method="post" class="d-inline">
+                                        <a asp-action="Edit" asp-route-id="@customer.Id" class="btn btn-sm btn-secondary">Edit</a>
+                                        <a asp-action="AssignCustomer" asp-route-customerId="@customer.Id" class="btn btn-sm btn-warning">Assign</a>
+                                        <form asp-action="Delete"
+                                              asp-route-id="@customer.Id"
+                                              method="post"
+                                              class="customer-action-form">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-danger" onclick="return confirm('Delete @customer.Name? This action cannot be undone.');">Delete</button>
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-danger"
+                                                    onclick="return confirm('Delete @customer.Name? This action cannot be undone.');">
+                                                Delete
+                                            </button>
                                         </form>
                                     }
                                 </div>
