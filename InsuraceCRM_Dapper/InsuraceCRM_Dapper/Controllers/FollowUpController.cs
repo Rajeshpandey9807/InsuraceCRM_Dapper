@@ -87,6 +87,7 @@ public class FollowUpController : Controller
         }
 
         var followUp = MapFollowUp(viewModel);
+        followUp.CreatedBy = currentUser.Id;
         var employeeId = customer.AssignedEmployeeId;
         if (employeeId is null)
         {
@@ -141,6 +142,16 @@ public class FollowUpController : Controller
             return Forbid();
         }
 
+        var existingFollowUp = await _followUpService.GetFollowUpByIdAsync(viewModel.Id);
+        if (existingFollowUp is null)
+        {
+            return NotFound();
+        }
+        if (existingFollowUp.CustomerId != viewModel.CustomerId)
+        {
+            return BadRequest();
+        }
+
         await ValidateAndAssignProductAsync(viewModel);
         ValidateConversionDetails(viewModel);
 
@@ -154,6 +165,9 @@ public class FollowUpController : Controller
         }
 
         var followUp = MapFollowUp(viewModel);
+        followUp.CreatedBy = existingFollowUp.CreatedBy == 0
+            ? currentUser.Id
+            : existingFollowUp.CreatedBy;
         await _followUpService.UpdateFollowUpAsync(followUp);
         return RedirectToAction(nameof(History), new { customerId = viewModel.CustomerId });
     }

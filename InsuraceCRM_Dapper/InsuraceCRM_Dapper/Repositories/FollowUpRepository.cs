@@ -28,7 +28,8 @@ public class FollowUpRepository : IFollowUpRepository
                 NextReminderDateTime,
                 ReminderRequired,
                 IsConverted,
-                ConversionReason)
+                ConversionReason,
+                CreatedBy)
             VALUES (
                 @CustomerId,
                 @FollowUpDate,
@@ -40,7 +41,8 @@ public class FollowUpRepository : IFollowUpRepository
                 @NextReminderDateTime,
                 @ReminderRequired,
                 @IsConverted,
-                @ConversionReason);
+                @ConversionReason,
+                @CreatedBy);
             SELECT CAST(SCOPE_IDENTITY() as int);";
 
         using var connection = await _connectionFactory.CreateConnectionAsync();
@@ -135,7 +137,7 @@ public class FollowUpRepository : IFollowUpRepository
             FROM FollowUps f
             INNER JOIN Customers c ON c.Id = f.CustomerId
             LEFT JOIN SoldProductDetails sp ON sp.FollowUpId = f.Id
-            WHERE c.AssignedEmployeeId = @EmployeeId
+            WHERE f.CreatedBy = @EmployeeId
             ORDER BY f.FollowUpDate DESC, f.Id DESC;";
 
         using var connection = await _connectionFactory.CreateConnectionAsync();

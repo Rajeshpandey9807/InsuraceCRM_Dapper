@@ -33,7 +33,8 @@ CREATE TABLE FollowUps (
     NextReminderDateTime DATETIME2 NULL,
     ReminderRequired BIT NOT NULL DEFAULT 0,
     IsConverted BIT NULL,
-    ConversionReason NVARCHAR(500) NULL
+    ConversionReason NVARCHAR(500) NULL,
+    CreatedBy INT NOT NULL REFERENCES Users(Id)
 );
 
 CREATE TABLE SoldProductDetails (
@@ -48,6 +49,7 @@ CREATE TABLE SoldProductDetails (
     PolicyEnforceDate DATE NOT NULL,
     CreatedOn DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
     UpdatedOn DATETIME2 NULL,
+    CreatedBy INT NOT NULL REFERENCES Users(Id),
     CONSTRAINT UQ_SoldProductDetails_FollowUp UNIQUE (FollowUpId)
 );
 
