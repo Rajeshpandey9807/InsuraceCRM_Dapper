@@ -16,7 +16,6 @@ namespace InsuraceCRM_Dapper.Controllers;
 [Authorize(Roles = "Admin")]
 public class AdminController : Controller
 {
-    private static readonly string[] AllowedRoles = { "Admin", "Manager", "Employee" };
     private readonly IUserService _userService;
     private readonly IFollowUpService _followUpService;
     private readonly ISoldProductDetailService _soldProductDetailService;
@@ -154,10 +153,6 @@ public class AdminController : Controller
         {
             ModelState.AddModelError("NewUser.RoleId", "Please select a valid role.");
         }
-        else if (!AllowedRoles.Contains(selectedRole.RoleName))
-        {
-            ModelState.AddModelError("NewUser.RoleId", "Role is not allowed.");
-        }
         else
         {
             viewModel.Role = selectedRole.RoleName;
@@ -228,10 +223,6 @@ public class AdminController : Controller
         if (selectedRole is null)
         {
             ModelState.AddModelError("Form.RoleId", "Please select a valid role.");
-        }
-        else if (!AllowedRoles.Contains(selectedRole.RoleName))
-        {
-            ModelState.AddModelError("Form.RoleId", "Role is not allowed.");
         }
         else
         {
@@ -305,8 +296,7 @@ public class AdminController : Controller
         {
             Users = filteredUsers,
             NewUser = form ?? new UserFormViewModel(),
-            Role = await _userService.GetRolesAsync(),
-            Roles = AllowedRoles,
+            Roles = await _userService.GetRolesAsync(),
             IncludeInactive = includeInactive,
             ActiveCount = activeCount,
             InactiveCount = inactiveCount
