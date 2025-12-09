@@ -149,6 +149,12 @@ public class AdminController : Controller
         var roles = (await _userService.GetRolesAsync()).ToList();
         var selectedRole = roles.FirstOrDefault(r => r.RoleId == viewModel.RoleId);
 
+        viewModel.Email = viewModel.Email?.Trim() ?? string.Empty;
+        if (await _userService.EmailExistsAsync(viewModel.Email))
+        {
+            ModelState.AddModelError("NewUser.Email", "Email address is already in use.");
+        }
+
         if (selectedRole is null)
         {
             ModelState.AddModelError("NewUser.RoleId", "Please select a valid role.");
