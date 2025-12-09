@@ -17,7 +17,7 @@
     var bodyClass = $"{baseBodyClass} {extraBodyClass}".Trim();
 }
 <body class="@bodyClass">
-    <header class="top-bar navbar navbar-dark bg-primary shadow-sm">
+    <header class="top-bar navbar navbar-light shadow-sm">
         <div class="container-fluid d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-2">
                 @if (isAuthenticated)
@@ -31,15 +31,15 @@
             <div class="d-flex align-items-center gap-3">
                 @if (isAuthenticated)
                 {
-                    <span class="navbar-text text-white small">@User.Identity?.Name (@User.FindFirst("role")?.Value)</span>
+                    <span class="navbar-text text-secondary small">@User.Identity?.Name (@User.FindFirst("role")?.Value)</span>
                     <form class="d-inline" asp-controller="Account" asp-action="Logout" method="post">
                         @Html.AntiForgeryToken()
-                        <button type="submit" class="btn btn-sm btn-outline-light">Logout</button>
+                        <button type="submit" class="btn btn-sm btn-outline-primary">Logout</button>
                     </form>
                 }
                 else
                 {
-                    <a class="btn btn-sm btn-outline-light" asp-controller="Account" asp-action="Login">Login</a>
+                    <a class="btn btn-sm btn-outline-primary" asp-controller="Account" asp-action="Login">Login</a>
                 }
             </div>
         </div>
@@ -48,7 +48,7 @@
         @if (isAuthenticated)
         {
             <aside id="sideNav" class="side-nav">
-                <div class="side-nav__title text-uppercase text-white-50">Navigation</div>
+                <div class="side-nav__title text-uppercase">Navigation</div>
                 <nav class="nav flex-column mt-3">
                     <a class="nav-link side-nav-link @(currentController == "Home" ? "active" : string.Empty)" asp-controller="Home" asp-action="Index">Dashboard</a>
                     <a class="nav-link side-nav-link @(currentController == "Customer" && currentAction != "BulkAssign" ? "active" : string.Empty)" asp-controller="Customer" asp-action="Index">Customers</a>
