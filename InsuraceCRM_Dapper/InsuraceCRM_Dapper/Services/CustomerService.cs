@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using InsuraceCRM_Dapper.Interfaces.Repositories;
@@ -17,6 +18,16 @@ public class CustomerService : ICustomerService
 
     public async Task<int> CreateCustomerAsync(Customer customer)
     {
+        if (customer is null)
+        {
+            throw new ArgumentNullException(nameof(customer));
+        }
+
+        if (customer.CreatedBy <= 0)
+        {
+            throw new ArgumentException("Customer must include the creator's user id.", nameof(customer));
+        }
+
         customer.CreatedDate = DateTime.UtcNow;
         return await _customerRepository.InsertAsync(customer);
     }

@@ -27,7 +27,8 @@ public class CustomerRepository : ICustomerRepository
                 SourceOfIncome,
                 FamilyMembers,
                 AssignedEmployeeId,
-                CreatedDate)
+                CreatedDate,
+                CreatedBy)
             VALUES (
                 @Name,
                 @MobileNumber,
@@ -37,7 +38,8 @@ public class CustomerRepository : ICustomerRepository
                 @SourceOfIncome,
                 @FamilyMembers,
                 @AssignedEmployeeId,
-                @CreatedDate);
+                @CreatedDate,
+                @CreatedBy);
             SELECT CAST(SCOPE_IDENTITY() as int);";
 
         using var connection = await _connectionFactory.CreateConnectionAsync();

@@ -38,6 +38,12 @@ public class CustomerController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> BulkUpload(IFormFile? file)
     {
+        var currentUser = await GetCurrentUserAsync();
+        if (currentUser is null)
+        {
+            return Challenge();
+        }
+
         if (file is null || file.Length == 0)
         {
             ModelState.AddModelError("BulkUpload", "Please select a CSV or Excel file to upload.");
@@ -52,6 +58,7 @@ public class CustomerController : Controller
                 {
                     foreach (var customer in importResult.Customers)
                     {
+                        customer.CreatedBy = currentUser.Id;
                         await _customerService.CreateCustomerAsync(customer);
                     }
 
@@ -80,12 +87,6 @@ public class CustomerController : Controller
             {
                 ModelState.AddModelError("BulkUpload", ex.Message);
             }
-        }
-
-        var currentUser = await GetCurrentUserAsync();
-        if (currentUser is null)
-        {
-            return Challenge();
         }
 
         var viewModel = await BuildCustomerListViewModelAsync(currentUser);
@@ -163,6 +164,13 @@ public class CustomerController : Controller
             return View(customer);
         }
 
+        var currentUser = await GetCurrentUserAsync();
+        if (currentUser is null)
+        {
+            return Challenge();
+        }
+
+        customer.CreatedBy = currentUser.Id;
         await _customerService.CreateCustomerAsync(customer);
         return RedirectToAction(nameof(Index));
     }
@@ -172,19 +180,20 @@ public class CustomerController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateInline([Bind(Prefix = "NewCustomer")] CustomerInputModel inputModel)
     {
+        var currentUser = await GetCurrentUserAsync();
+        if (currentUser is null)
+        {
+            return Challenge();
+        }
+
         if (!ModelState.IsValid)
         {
-            var currentUser = await GetCurrentUserAsync();
-            if (currentUser is null)
-            {
-                return Challenge();
-            }
-
             var viewModel = await BuildCustomerListViewModelAsync(currentUser, inputModel);
             return View("Index", viewModel);
         }
 
-        await _customerService.CreateCustomerAsync(inputModel.ToCustomer());
+        var customer = inputModel.ToCustomer(currentUser.Id);
+        await _customerService.CreateCustomerAsync(customer);
         TempData["CustomerSuccess"] = "Customer added successfully.";
         return RedirectToAction(nameof(Index));
     }
