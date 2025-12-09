@@ -161,37 +161,34 @@
                             <tbody>
                                 @foreach (var reminder in reminders)
                                 {
-                                    var statusColor = customer.Status switch
-                                    {
-                                        "Converted" => "bg-emerald-500/20 text-emerald-200 border-emerald-400/40",
-                                        "Active" => "bg-blue-500/20 text-blue-200 border-blue-400/40",
-                                        "Follow-up" => "bg-amber-500/20 text-amber-200 border-amber-400/40",
-                                        _ => "bg-rose-500/20 text-rose-200 border-rose-400/40"
-                                    };
                                     <tr class="transition duration-200 hover:bg-white/5">
                                         <td class="px-4 py-4">
                                             <div class="flex items-center gap-3">
                                                 <div class="h-10 w-10 rounded-2xl border border-white/10 bg-white/5"></div>
                                                 <div>
-                                                    <p class="font-semibold">@customer.Name</p>
-                                                    <p class="text-xs text-white/50">Last touch @DateTime.UtcNow.ToLocalTime():h:mm tt</p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            @reminder.ReminderDateTime.ToLocalTime().ToString("h:mm tt")
-                                        </td>
-                                        <td class="text-muted">@(!string.IsNullOrWhiteSpace(reminder.Note) ? reminder.Note : "No notes yet")</td>
-                                        <td class="text-end">
-                                            <a asp-controller="FollowUp"
-                                               asp-action="Add"
-                                               asp-route-customerId="@reminder.CustomerId"
-                                               class="btn btn-sm btn-outline-primary">
-                                                Log follow-up
-                                            </a>
-                                        </td>
-                                    </tr>
-                                }
+                                                    <p class="font-semibold">@reminder.CustomerName</p>
+                                                    <p class="text-xs text-white/50">
+                                                        @(string.IsNullOrWhiteSpace(reminder.CustomerMobileNumber)
+                                                                                                        ? $"Customer #{reminder.CustomerId}"
+                                                                                                        : reminder.CustomerMobileNumber)
+                                            </p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    @reminder.ReminderDateTime.ToLocalTime().ToString("h:mm tt")
+                                </td>
+                                <td class="text-muted">@(!string.IsNullOrWhiteSpace(reminder.Note) ? reminder.Note : "No notes yet")</td>
+                                <td class="text-end">
+                                    <a asp-controller="FollowUp"
+                                       asp-action="Add"
+                                       asp-route-customerId="@reminder.CustomerId"
+                                       class="btn btn-sm btn-outline-primary">
+                                        Log follow-up
+                                    </a>
+                                </td>
+                            </tr>
+                                                        }
                             </tbody>
                         </table>
                     </div>

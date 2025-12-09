@@ -3,36 +3,253 @@
     ViewData["Title"] = "Login";
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-5">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h4 class="card-title mb-4 text-center">Insurance CRM Login</h4>
-                <form asp-action="Login" method="post">
-                    @Html.AntiForgeryToken()
-                    <div class="mb-3">
-                        <label asp-for="Email" class="form-label"></label>
-                        <input asp-for="Email" class="form-control" />
-                        <span asp-validation-for="Email" class="text-danger"></span>
-                    </div>
-                    <div class="mb-3">
-                        <label asp-for="Password" class="form-label"></label>
-                        <input asp-for="Password" class="form-control" />
-                        <span asp-validation-for="Password" class="text-danger"></span>
-                    </div>
-                    <div class="form-check mb-3">
-                        <input asp-for="RememberMe" class="form-check-input" />
-                        <label asp-for="RememberMe" class="form-check-label"></label>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">Sign In</button>
-                    <div class="text-danger mt-3">
-                        @Html.ValidationSummary()
-                    </div>
-                </form>
+<div class="login-page d-flex align-items-center justify-content-center">
+    <div class="login-card shadow-sm">
+        <div class="login-card__media">
+            <div class="media-illustration">
+                <img src="~/img/telecalling-illustration.svg" alt="Telecalling specialist assisting clients" loading="lazy" />
             </div>
+            <div class="media-badge">
+                <span class="badge-label">Live queue</span>
+                <strong>24 active calls</strong>
+                <span class="badge-sub">Auto-assign enabled</span>
+            </div>
+        </div>
+        <div class="login-card__body">
+            <img src="~/img/telecalling-logo.svg" alt="Telecalling CRM" class="crm-logo" loading="lazy" />
+            <div class="login-card__header">
+                <span class="brand-pill">Customer Success Desk</span>
+                <h2 class="fw-semibold mt-3 mb-2">Welcome back</h2>
+                <p class="text-muted mb-4">Pick up right where your calling queue left off.</p>
+            </div>
+            <form asp-action="Login" method="post" class="login-form">
+                @Html.AntiForgeryToken()
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label">Username</label>
+                    <div class="input-shell">
+                        <input asp-for="Email" class="form-control" placeholder="name@company.com" autocomplete="username" />
+                    </div>
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <label asp-for="Password" class="form-label mb-0">Password</label>
+                    </div>
+                    <div class="input-shell">
+                        <input asp-for="Password" class="form-control" placeholder="Enter your password" autocomplete="current-password" />
+                    </div>
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+                <div class="login-meta d-flex align-items-center justify-content-between mb-4">
+                    <div class="form-check m-0">
+                        <input asp-for="RememberMe" class="form-check-input" />
+                        <label asp-for="RememberMe" class="form-check-label">Remember me</label>
+                    </div>
+                    <a class="forgot-link" href='@Url.Action("ForgotPassword", "Account")'>Forgot password?</a>
+                </div>
+                <button type="submit" class="btn btn-primary login-btn w-100">Sign in</button>
+                <div class="text-danger mt-4 text-center">
+                    @Html.ValidationSummary()
+                </div>
+            </form>
         </div>
     </div>
 </div>
+
+<style>
+    :root {
+        --login-bg: #f4f7fb;
+        --card-bg: rgba(255, 255, 255, 0.95);
+        --primary-blue: #3b7dd8;
+        --primary-blue-dark: #2b69c2;
+        --soft-border: rgba(59, 125, 216, 0.08);
+    }
+
+    body {
+        background: radial-gradient(circle at top, #e1edff 0%, #f9fbff 45%, #f5f7fb 100%);
+        min-height: 100vh;
+    }
+
+    .login-page {
+        min-height: calc(100vh - 120px);
+        padding: 3rem 1.5rem;
+        background: linear-gradient(135deg, rgba(59, 125, 216, 0.12), rgba(176, 202, 255, 0.25));
+        backdrop-filter: blur(2px);
+    }
+
+    .login-card {
+        max-width: 960px;
+        width: 100%;
+        border-radius: 28px;
+        padding: 2rem;
+        background: var(--card-bg);
+        border: 1px solid var(--soft-border);
+        box-shadow: 0 25px 60px rgba(33, 56, 120, 0.12);
+        display: flex;
+        flex-direction: column;
+        gap: 1.75rem;
+        overflow: hidden;
+    }
+
+    .login-card__body {
+        background: #fff;
+        border-radius: 24px;
+        padding: 2.25rem;
+        border: 1px solid rgba(59, 125, 216, 0.08);
+    }
+
+    .login-card__header h2 {
+        color: #1a2c4d;
+    }
+
+    .login-card__media {
+        position: relative;
+        border-radius: 22px;
+        background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.65), rgba(59, 125, 216, 0.15));
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        padding: 1.5rem;
+        overflow: hidden;
+    }
+
+    .media-illustration img {
+        width: 100%;
+        max-height: 260px;
+        object-fit: contain;
+        display: block;
+        filter: drop-shadow(0 20px 35px rgba(59, 125, 216, 0.2));
+    }
+
+    .media-badge {
+        position: absolute;
+        bottom: 1.75rem;
+        right: 1.75rem;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 18px;
+        padding: 0.9rem 1.2rem;
+        border: 1px solid rgba(50, 103, 180, 0.15);
+        box-shadow: 0 15px 30px rgba(26, 44, 77, 0.12);
+        text-align: right;
+    }
+
+    .media-badge strong {
+        display: block;
+        color: #1a2c4d;
+        font-size: 1.05rem;
+    }
+
+    .badge-label {
+        text-transform: uppercase;
+        font-size: 0.68rem;
+        letter-spacing: 0.2em;
+        color: #6b7da3;
+    }
+
+    .badge-sub {
+        font-size: 0.8rem;
+        color: #4f5f7c;
+    }
+
+    .crm-logo {
+        width: 165px;
+        height: auto;
+    }
+
+    .brand-pill {
+        display: inline-flex;
+        padding: 0.3rem 0.9rem;
+        border-radius: 999px;
+        background: linear-gradient(120deg, rgba(59, 125, 216, 0.15), rgba(59, 125, 216, 0.35));
+        color: #3267b4;
+        font-size: 0.85rem;
+        letter-spacing: 0.04em;
+    }
+
+    .input-shell {
+        position: relative;
+        border-radius: 14px;
+        border: 1px solid rgba(26, 44, 77, 0.08);
+        background: rgba(255, 255, 255, 0.8);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .input-shell:focus-within {
+        border-color: var(--primary-blue);
+        box-shadow: 0 0 0 4px rgba(59, 125, 216, 0.08);
+    }
+
+    .input-shell .form-control {
+        border: 0;
+        padding: 0.85rem 1rem;
+        background: transparent;
+        font-size: 0.95rem;
+    }
+
+    .form-control:focus {
+        box-shadow: none;
+    }
+
+    .login-meta .form-check-label {
+        font-size: 0.9rem;
+        color: #4e5d78;
+    }
+
+    .forgot-link {
+        font-size: 0.9rem;
+        color: var(--primary-blue);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .forgot-link:hover {
+        color: var(--primary-blue-dark);
+    }
+
+    .login-btn {
+        border-radius: 14px;
+        padding: 0.95rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        background: linear-gradient(120deg, var(--primary-blue), #6aa8ff);
+        border: none;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    }
+
+    .login-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(59, 125, 216, 0.25);
+        filter: brightness(1.03);
+    }
+
+    @media (min-width: 992px) {
+        .login-card {
+            flex-direction: row;
+            padding: 2.5rem;
+        }
+
+        .login-card__media,
+        .login-card__body {
+            width: 50%;
+        }
+
+        .login-card__media {
+            min-height: 420px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .login-card {
+            padding: 2rem 1.5rem;
+        }
+
+        .login-page {
+            padding: 2rem 1rem;
+        }
+
+        .login-card__body {
+            padding: 1.75rem;
+        }
+    }
+</style>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
