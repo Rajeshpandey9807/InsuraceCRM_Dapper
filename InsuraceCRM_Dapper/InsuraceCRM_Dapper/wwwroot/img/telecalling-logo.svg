@@ -1,0 +1,18 @@
+<svg width="160" height="40" viewBox="0 0 160 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logoGradient" x1="0" y1="0" x2="160" y2="40" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3B7DD8"/>
+      <stop offset="1" stop-color="#65B2FF"/>
+    </linearGradient>
+  </defs>
+  <rect width="160" height="40" rx="12" fill="#F7FBFF"/>
+  <g transform="translate(12 6)">
+    <circle cx="14" cy="14" r="14" fill="url(#logoGradient)"/>
+    <path d="M4 15C4 9.477 8.477 5 14 5C19.523 5 24 9.477 24 15V19C24 21.209 22.209 23 20 23H18" stroke="white" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M4 18V20C4 22.209 5.791 24 8 24H10" stroke="white" stroke-width="2.4" stroke-linecap="round"/>
+    <rect x="8" y="22" width="12" height="4" rx="1.5" fill="white"/>
+    <circle cx="10" cy="14" r="1.6" fill="white"/>
+    <circle cx="18" cy="14" r="1.6" fill="white"/>
+  </g>
+  <text x="56" y="25" fill="#1F3E6D" font-family="'Segoe UI', 'Inter', sans-serif" font-size="16" font-weight="600">Telecalling CRM</text>
+</svg>
