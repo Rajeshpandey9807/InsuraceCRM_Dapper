@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace InsuraceCRM_Dapper.ViewModels;
 
@@ -17,7 +18,7 @@ public class UserFormViewModel : IValidatableObject
     [Display(Name = "Mobile number")]
     public string? Mobile { get; set; }
 
-    [Required]
+    [BindNever]
     public string Role { get; set; } = "Employee";
 
     [Display(Name = "Role")]
