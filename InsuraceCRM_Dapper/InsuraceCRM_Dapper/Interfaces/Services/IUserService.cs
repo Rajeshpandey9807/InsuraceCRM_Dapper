@@ -7,6 +7,7 @@ public interface IUserService
     Task<User?> AuthenticateAsync(string email, string password);
     Task<IEnumerable<User>> GetAllUsersAsync(bool includeInactive = false);
     Task<User?> GetByIdAsync(int id);
+    Task<bool> EmailExistsAsync(string email);
     Task<int> CreateUserAsync(User user, string password);
     Task UpdateUserAsync(User user, string? newPassword = null);
     Task UpdateRoleAsync(int userId, int role);

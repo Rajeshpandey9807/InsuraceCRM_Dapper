@@ -63,7 +63,7 @@
     <label asp-for="NewUser.RoleId" class="form-label"></label>
 
     <select asp-for="NewUser.RoleId"
-            asp-items="Model.Role.Select(r => new SelectListItem {
+            asp-items="Model.Roles.Select(r => new SelectListItem {
                 Value = r.RoleId.ToString(),
                 Text = r.RoleName
             })"

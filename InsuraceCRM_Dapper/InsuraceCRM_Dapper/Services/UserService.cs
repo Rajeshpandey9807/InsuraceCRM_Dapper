@@ -34,6 +34,14 @@ public class UserService : IUserService
 
     public Task<User?> GetByIdAsync(int id) => _userRepository.GetByIdAsync(id);
 
+    public async Task<bool> EmailExistsAsync(string email)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(email);
+        var normalizedEmail = email.Trim();
+        var existingUser = await _userRepository.GetByEmailAsync(normalizedEmail);
+        return existingUser is not null;
+    }
+
     public async Task<IEnumerable<Role>> GetRolesAsync()
     {
         return await _userRepository.GetRolesAsync();
