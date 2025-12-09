@@ -18,7 +18,8 @@ CREATE TABLE Customers (
     SourceOfIncome NVARCHAR(150) NULL,
     FamilyMembers INT NULL,
     AssignedEmployeeId INT NULL REFERENCES Users(Id),
-    CreatedDate DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+    CreatedDate DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    CreatedBy INT NOT NULL REFERENCES Users(Id)
 );
 
 CREATE TABLE FollowUps (

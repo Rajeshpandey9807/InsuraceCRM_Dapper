@@ -45,7 +45,7 @@
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label asp-for="Form.Role" class="form-label"></label>
+                        <label asp-for="Form.RoleId" class="form-label"></label>
                          <select asp-for="Form.RoleId"
             asp-items="Model.Roles.Select(r => new SelectListItem {
                 Value = r.RoleId.ToString(),
@@ -55,7 +55,7 @@
 
         <option value="">-- Select Role --</option>
     </select>
-                        <span asp-validation-for="Form.Role" class="text-danger"></span>
+                        <span asp-validation-for="Form.RoleId" class="text-danger"></span>
                     </div>
                 </div>
             </div>

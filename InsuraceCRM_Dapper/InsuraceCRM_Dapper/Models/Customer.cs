@@ -31,5 +31,7 @@ public class Customer
 
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
+    public int CreatedBy { get; set; }
+
     public string? AssignedEmployeeName { get; set; }
 }

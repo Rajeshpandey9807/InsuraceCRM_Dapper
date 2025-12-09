@@ -20,6 +20,8 @@ public class UserFormViewModel : IValidatableObject
     [Required]
     public string Role { get; set; } = "Employee";
 
+    [Display(Name = "Role")]
+    [Range(1, int.MaxValue, ErrorMessage = "Role selection is required.")]
     public int RoleId { get; set; }
 
     [DataType(DataType.Password)]

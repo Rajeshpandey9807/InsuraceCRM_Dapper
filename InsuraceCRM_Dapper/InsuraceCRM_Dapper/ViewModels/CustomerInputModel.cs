@@ -26,7 +26,7 @@ public class CustomerInputModel
     [Range(0, 50, ErrorMessage = "Family members must be between 0 and 50.")]
     public int? FamilyMembers { get; set; }
 
-    public Customer ToCustomer() =>
+    public Customer ToCustomer(int createdBy) =>
         new()
         {
             Name = Name?.Trim() ?? string.Empty,
@@ -35,6 +35,7 @@ public class CustomerInputModel
             InsuranceType = string.IsNullOrWhiteSpace(InsuranceType) ? null : InsuranceType.Trim(),
             Income = Income,
             SourceOfIncome = string.IsNullOrWhiteSpace(SourceOfIncome) ? null : SourceOfIncome.Trim(),
-            FamilyMembers = FamilyMembers
+            FamilyMembers = FamilyMembers,
+            CreatedBy = createdBy
         };
 }

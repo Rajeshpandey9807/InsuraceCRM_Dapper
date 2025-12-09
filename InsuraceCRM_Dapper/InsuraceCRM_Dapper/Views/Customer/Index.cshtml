@@ -1,10 +1,16 @@
 @model CustomerListViewModel
+@using System.Linq
 @{
     ViewData["Title"] = "Customers";
     var bulkErrors = ViewData["BulkUploadErrors"] as IList<string>;
     var rawImportErrors = TempData["CustomerImportErrors"] as string;
     var importErrorLines = rawImportErrors?
         .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+}
+
+@using InsuraceCRM_Dapper.ViewModels
+@{
+    var filters = Model.Filters ?? new CustomerFilterInputModel();
 }
 
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
@@ -138,6 +144,67 @@
     </div>
 }
 
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form asp-action="Index" method="get" class="row g-3 align-items-end">
+            <div class="col-12 col-lg-3">
+                <label class="form-label text-muted fw-semibold">Search</label>
+                <input type="text"
+                       name="SearchTerm"
+                       value="@filters.SearchTerm"
+                       class="form-control"
+                       placeholder="Name, mobile or location" />
+            </div>
+            <div class="col-12 col-lg-3">
+                <label class="form-label text-muted fw-semibold">Location</label>
+                <input type="text"
+                       name="Location"
+                       value="@filters.Location"
+                       class="form-control"
+                       placeholder="e.g. Mumbai" />
+            </div>
+            <div class="col-12 col-lg-3">
+                <label class="form-label text-muted fw-semibold">Insurance Type</label>
+                <input type="text"
+                       name="InsuranceType"
+                       value="@filters.InsuranceType"
+                       class="form-control"
+                       placeholder="Health, Life..." />
+            </div>
+            <div class="col-12 col-lg-3">
+                <label class="form-label text-muted fw-semibold">Assignment</label>
+                <select name="Assignment" class="form-select">
+                    <option value="" selected="@(string.IsNullOrWhiteSpace(filters.Assignment) ? "selected" : null)">All</option>
+                    <option value="@CustomerFilterInputModel.AssignmentAssigned"
+                            selected="@(filters.AssignmentEquals(CustomerFilterInputModel.AssignmentAssigned) ? "selected" : null)">
+                        Assigned
+                    </option>
+                    <option value="@CustomerFilterInputModel.AssignmentUnassigned"
+                            selected="@(filters.AssignmentEquals(CustomerFilterInputModel.AssignmentUnassigned) ? "selected" : null)">
+                        Unassigned
+                    </option>
+                </select>
+            </div>
+            <div class="col-12 d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-primary">
+                    Apply Filters
+                </button>
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    Reset
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.HasActiveFilters)
+{
+    <div class="alert alert-info d-flex justify-content-between align-items-center gap-2 mb-3">
+        <span class="mb-0">Filters applied. Showing @Model.Customers.Count() matching customer(s).</span>
+        <a asp-action="Index" class="btn btn-sm btn-outline-light">Clear filters</a>
+    </div>
+}
+
 <div class="card shadow-sm">
     <div class="card-body">
         <div class="table-responsive">
@@ -170,28 +237,40 @@
                             <td>@(customer.FamilyMembers?.ToString() ?? "-")</td>
                             <td>@(customer.AssignedEmployeeName ?? "Unassigned")</td>
                             <td class="text-end">
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <a asp-controller="FollowUp" asp-action="History" asp-route-customerId="@customer.Id" class="btn btn-info">History</a>
+                                <div class="customer-actions d-flex flex-wrap justify-content-end gap-2">
+                                    <a asp-controller="FollowUp"
+                                       asp-action="History"
+                                       asp-route-customerId="@customer.Id"
+                                       class="btn btn-sm btn-info">
+                                        History
+                                    </a>
                                     <a asp-controller="SoldProductDetail"
                                        asp-action="Index"
                                        asp-route-customerId="@customer.Id"
                                        asp-route-customerName="@customer.Name"
-                                       class="btn btn-outline-dark">
+                                       class="btn btn-sm btn-outline-dark">
                                         Sales
                                     </a>
                                     <a asp-controller="FollowUp"
                                        asp-action="Add"
                                        asp-route-customerId="@customer.Id"
-                                       class="btn btn-success">
+                                       class="btn btn-sm btn-success">
                                         Follow-Up
                                     </a>
                                     @if (Model.CanEdit)
                                     {
-                                        <a asp-action="Edit" asp-route-id="@customer.Id" class="btn btn-secondary">Edit</a>
-                                        <a asp-action="AssignCustomer" asp-route-customerId="@customer.Id" class="btn btn-warning">Assign</a>
-                                        <form asp-action="Delete" asp-route-id="@customer.Id" method="post" class="d-inline">
+                                        <a asp-action="Edit" asp-route-id="@customer.Id" class="btn btn-sm btn-secondary">Edit</a>
+                                        <a asp-action="AssignCustomer" asp-route-customerId="@customer.Id" class="btn btn-sm btn-warning">Assign</a>
+                                        <form asp-action="Delete"
+                                              asp-route-id="@customer.Id"
+                                              method="post"
+                                              class="customer-action-form">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-danger" onclick="return confirm('Delete @customer.Name? This action cannot be undone.');">Delete</button>
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-danger"
+                                                    onclick="return confirm('Delete @customer.Name? This action cannot be undone.');">
+                                                Delete
+                                            </button>
                                         </form>
                                     }
                                 </div>

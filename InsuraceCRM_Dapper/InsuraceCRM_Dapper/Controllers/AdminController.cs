@@ -147,10 +147,21 @@ public class AdminController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateUser([Bind(Prefix = "NewUser")] UserFormViewModel viewModel, bool includeInactive = false)
     {
+        var roles = (await _userService.GetRolesAsync()).ToList();
+        var selectedRole = roles.FirstOrDefault(r => r.RoleId == viewModel.RoleId);
 
-        if (!AllowedRoles.Contains(viewModel.Role))
+        if (selectedRole is null)
         {
-            ModelState.AddModelError("NewUser.Role", "Invalid role selection.");
+            ModelState.AddModelError("NewUser.RoleId", "Please select a valid role.");
+        }
+        else if (!AllowedRoles.Contains(selectedRole.RoleName))
+        {
+            ModelState.AddModelError("NewUser.RoleId", "Role is not allowed.");
+        }
+        else
+        {
+            viewModel.Role = selectedRole.RoleName;
+            viewModel.RoleId = selectedRole.RoleId;
         }
 
         if (!ModelState.IsValid)
@@ -211,14 +222,26 @@ public class AdminController : Controller
             return BadRequest();
         }
 
-        if (!AllowedRoles.Contains(viewModel.Form.Role))
+        var roles = (await _userService.GetRolesAsync()).ToList();
+        var selectedRole = roles.FirstOrDefault(r => r.RoleId == viewModel.Form.RoleId);
+
+        if (selectedRole is null)
         {
-            ModelState.AddModelError("Form.Role", "Invalid role selection.");
+            ModelState.AddModelError("Form.RoleId", "Please select a valid role.");
+        }
+        else if (!AllowedRoles.Contains(selectedRole.RoleName))
+        {
+            ModelState.AddModelError("Form.RoleId", "Role is not allowed.");
+        }
+        else
+        {
+            viewModel.Form.Role = selectedRole.RoleName;
+            viewModel.Form.RoleId = selectedRole.RoleId;
         }
 
         if (!ModelState.IsValid)
         {
-            viewModel.Roles = await _userService.GetRolesAsync();
+            viewModel.Roles = roles;
             return View(viewModel);
         }
 
@@ -228,7 +251,7 @@ public class AdminController : Controller
             FullName = viewModel.Form.Name,
             Email = viewModel.Form.Email,
             Mobile = viewModel.Form.Mobile,
-            //Role = viewModel.Form.Role,
+            Role = viewModel.Form.Role,
             IsActive = viewModel.Form.IsActive,
             RoleId = viewModel.Form.RoleId
         };
