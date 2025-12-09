@@ -1,0 +1,33 @@
+<svg width="560" height="420" viewBox="0 0 560 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0" y1="0" x2="560" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E4F1FF"/>
+      <stop offset="1" stop-color="#C9DFFF"/>
+    </linearGradient>
+    <linearGradient id="waveGradient" x1="100" y1="240" x2="420" y2="400" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6AA8FF" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#3B7DD8" stop-opacity="0.65"/>
+    </linearGradient>
+    <linearGradient id="avatarGradient" x1="190" y1="120" x2="360" y2="300" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#F2F6FF"/>
+    </linearGradient>
+  </defs>
+  <rect width="560" height="420" rx="32" fill="url(#bgGradient)"/>
+  <path d="M40 290C110 250 200 310 280 290C360 270 440 210 520 240V420H40V290Z" fill="url(#waveGradient)"/>
+  <circle cx="280" cy="210" r="120" fill="url(#avatarGradient)" stroke="#E1E9FF" stroke-width="2"/>
+  <circle cx="280" cy="210" r="70" fill="#F6FAFF" stroke="#CADBFF" stroke-width="2"/>
+  <path d="M240 224C240 200 258 182 282 182C305 182 323 200 323 224V242C323 255 313 265 300 265H264C251 265 240 255 240 242V224Z" fill="#85B7FF"/>
+  <circle cx="282" cy="166" r="34" fill="#FFDCCB"/>
+  <path d="M252 156C252 139 266 125 283 125C300 125 314 139 314 156V162H252V156Z" fill="#1F3E6D"/>
+  <path d="M238 214C233 214 229 217 229 222V234C229 239 233 242 238 242" stroke="#2B69C2" stroke-width="10" stroke-linecap="round"/>
+  <path d="M326 214C331 214 335 217 335 222V234C335 239 331 242 326 242" stroke="#2B69C2" stroke-width="10" stroke-linecap="round"/>
+  <path d="M214 248C214 233 226 221 241 221" stroke="#8FBFFF" stroke-width="12" stroke-linecap="round"/>
+  <path d="M348 248C348 233 336 221 321 221" stroke="#8FBFFF" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="184" cy="150" r="22" fill="#FFFFFF" stroke="#9FC6FF" stroke-width="4"/>
+  <circle cx="384" cy="130" r="28" fill="#FFFFFF" stroke="#9FC6FF" stroke-width="4"/>
+  <path d="M386 130C404 130 419 145 419 163" stroke="#4F8CE3" stroke-width="6" stroke-linecap="round"/>
+  <path d="M386 130C398 130 409 141 409 153" stroke="#4F8CE3" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+  <path d="M174 150C156 150 141 135 141 117" stroke="#4F8CE3" stroke-width="6" stroke-linecap="round"/>
+  <path d="M174 150C162 150 151 139 151 127" stroke="#4F8CE3" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+</svg>
