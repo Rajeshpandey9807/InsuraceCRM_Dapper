@@ -66,9 +66,10 @@ else
         <div class="card shadow-sm mb-4">
             <div class="card-body">
                 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-4">
+                <div class="row g-3 align-items-start">
+                    <div class="col-md-4 d-flex flex-column">
                         <label asp-for="SelectedEmployeeId" class="form-label">Assign To</label>
+                        @Html.ValidationMessageFor(m => m.SelectedEmployeeId, "", new { @class = "text-danger small d-block mb-1" })
                         <select asp-for="SelectedEmployeeId" class="form-select">
                             <option value="">-- Select Employee --</option>
                             @foreach (var employee in Model.Employees)
@@ -76,7 +77,6 @@ else
                                 <option value="@employee.Id">@employee.FullName (@employee.Email)</option>
                             }
                         </select>
-                        <span asp-validation-for="SelectedEmployeeId" class="text-danger"></span>
                         @if (!Model.Employees.Any())
                         {
                             <div class="alert alert-warning mt-2 py-2">
@@ -84,12 +84,12 @@ else
                             </div>
                         }
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4 d-flex flex-column">
                         <label for="customerSearch" class="form-label">Filter Customers</label>
                         <input type="search" id="customerSearch" class="form-control" placeholder="Search by name, mobile, or location" />
                         <small class="text-muted">Search applies instantly to the list below.</small>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4 d-flex flex-column gap-2">
                         <label class="form-label">Selection Summary</label>
                         <div class="d-flex flex-column flex-md-row align-items-md-center gap-2">
                             <span class="badge bg-primary-subtle text-primary">
@@ -101,9 +101,6 @@ else
                         </div>
                         <small class="text-muted">Pick at least one customer to enable the button.</small>
                     </div>
-                </div>
-                <div class="text-danger mt-2">
-                    @Html.ValidationMessageFor(m => m.SelectedCustomerIds)
                 </div>
             </div>
         </div>
@@ -120,6 +117,9 @@ else
                         <span class="badge bg-light text-dark">Unassigned: @unassignedCustomers</span>
                     </div>
                 </div>
+            </div>
+            <div class="px-3 pt-2">
+                @Html.ValidationMessageFor(m => m.SelectedCustomerIds, "", new { @class = "text-danger small d-block mb-2" })
             </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0" id="bulkAssignTable">
