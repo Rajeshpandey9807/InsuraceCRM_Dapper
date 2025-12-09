@@ -108,7 +108,7 @@ public class CustomerController : Controller
         return File(csvBytes, "text/csv", "customer-template.csv");
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index([FromQuery] CustomerFilterInputModel? filters)
     {
         var currentUser = await GetCurrentUserAsync();
         if (currentUser is null)
@@ -116,7 +116,7 @@ public class CustomerController : Controller
             return Challenge();
         }
 
-        var viewModel = await BuildCustomerListViewModelAsync(currentUser);
+        var viewModel = await BuildCustomerListViewModelAsync(currentUser, filters: filters);
         return View(viewModel);
     }
 
@@ -323,8 +323,10 @@ public class CustomerController : Controller
 
     private async Task<CustomerListViewModel> BuildCustomerListViewModelAsync(
         User currentUser,
-        CustomerInputModel? newCustomer = null)
+        CustomerInputModel? newCustomer = null,
+        CustomerFilterInputModel? filters = null)
     {
+        filters ??= new CustomerFilterInputModel();
         var customers = (await _customerService.GetCustomersForUserAsync(currentUser)).ToList();
         var userLookup = (await _userService.GetAllUsersAsync(includeInactive: true))
             .ToDictionary(u => u.Id, u => u.FullName);
@@ -338,12 +340,62 @@ public class CustomerController : Controller
             }
         }
 
+        var filteredCustomers = ApplyCustomerFilters(customers, filters).ToList();
+
         return new CustomerListViewModel
         {
-            Customers = customers,
+            Customers = filteredCustomers,
             CanEdit = IsManagerOrAdmin(currentUser.Role),
-            NewCustomer = newCustomer ?? new CustomerInputModel()
+            NewCustomer = newCustomer ?? new CustomerInputModel(),
+            Filters = filters,
+            HasActiveFilters = filters.HasValues
         };
+    }
+
+    private static IEnumerable<Customer> ApplyCustomerFilters(
+        IEnumerable<Customer> customers,
+        CustomerFilterInputModel filters)
+    {
+        var query = customers;
+
+        if (!string.IsNullOrWhiteSpace(filters.SearchTerm))
+        {
+            var term = filters.SearchTerm.Trim();
+            query = query.Where(customer =>
+                (!string.IsNullOrWhiteSpace(customer.Name) && customer.Name.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrWhiteSpace(customer.MobileNumber) && customer.MobileNumber.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrWhiteSpace(customer.Location) && customer.Location.Contains(term, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filters.Location))
+        {
+            var location = filters.Location.Trim();
+            query = query.Where(customer =>
+                !string.IsNullOrWhiteSpace(customer.Location) &&
+                customer.Location.Equals(location, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filters.InsuranceType))
+        {
+            var insurance = filters.InsuranceType.Trim();
+            query = query.Where(customer =>
+                !string.IsNullOrWhiteSpace(customer.InsuranceType) &&
+                customer.InsuranceType.Equals(insurance, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filters.Assignment))
+        {
+            if (filters.AssignmentEquals(CustomerFilterInputModel.AssignmentAssigned))
+            {
+                query = query.Where(customer => customer.AssignedEmployeeId.HasValue);
+            }
+            else if (filters.AssignmentEquals(CustomerFilterInputModel.AssignmentUnassigned))
+            {
+                query = query.Where(customer => !customer.AssignedEmployeeId.HasValue);
+            }
+        }
+
+        return query;
     }
 
     private async Task<BulkAssignCustomersViewModel> BuildBulkAssignViewModelAsync(

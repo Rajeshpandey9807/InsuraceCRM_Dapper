@@ -1,10 +1,16 @@
 @model CustomerListViewModel
+@using System.Linq
 @{
     ViewData["Title"] = "Customers";
     var bulkErrors = ViewData["BulkUploadErrors"] as IList<string>;
     var rawImportErrors = TempData["CustomerImportErrors"] as string;
     var importErrorLines = rawImportErrors?
         .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+}
+
+@using InsuraceCRM_Dapper.ViewModels
+@{
+    var filters = Model.Filters ?? new CustomerFilterInputModel();
 }
 
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
@@ -23,6 +29,67 @@
         </div>
     </div>
 </div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form asp-action="Index" method="get" class="row g-3 align-items-end">
+            <div class="col-12 col-lg-3">
+                <label class="form-label text-muted fw-semibold">Search</label>
+                <input type="text"
+                       name="SearchTerm"
+                       value="@filters.SearchTerm"
+                       class="form-control"
+                       placeholder="Name, mobile or location" />
+            </div>
+            <div class="col-12 col-lg-3">
+                <label class="form-label text-muted fw-semibold">Location</label>
+                <input type="text"
+                       name="Location"
+                       value="@filters.Location"
+                       class="form-control"
+                       placeholder="e.g. Mumbai" />
+            </div>
+            <div class="col-12 col-lg-3">
+                <label class="form-label text-muted fw-semibold">Insurance Type</label>
+                <input type="text"
+                       name="InsuranceType"
+                       value="@filters.InsuranceType"
+                       class="form-control"
+                       placeholder="Health, Life..." />
+            </div>
+            <div class="col-12 col-lg-3">
+                <label class="form-label text-muted fw-semibold">Assignment</label>
+                <select name="Assignment" class="form-select">
+                    <option value="" selected="@(string.IsNullOrWhiteSpace(filters.Assignment) ? "selected" : null)">All</option>
+                    <option value="@CustomerFilterInputModel.AssignmentAssigned"
+                            selected="@(filters.AssignmentEquals(CustomerFilterInputModel.AssignmentAssigned) ? "selected" : null)">
+                        Assigned
+                    </option>
+                    <option value="@CustomerFilterInputModel.AssignmentUnassigned"
+                            selected="@(filters.AssignmentEquals(CustomerFilterInputModel.AssignmentUnassigned) ? "selected" : null)">
+                        Unassigned
+                    </option>
+                </select>
+            </div>
+            <div class="col-12 d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-primary">
+                    Apply Filters
+                </button>
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    Reset
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.HasActiveFilters)
+{
+    <div class="alert alert-info d-flex justify-content-between align-items-center gap-2">
+        <span class="mb-0">Filters applied. Showing @Model.Customers.Count() matching customer(s).</span>
+        <a asp-action="Index" class="btn btn-sm btn-outline-light">Clear filters</a>
+    </div>
+}
 
 @if (TempData["CustomerSuccess"] is string successMessage)
 {
