@@ -11,4 +11,8 @@ public class CustomerListViewModel
     public CustomerInputModel NewCustomer { get; set; } = new();
     public CustomerFilterInputModel Filters { get; set; } = new();
     public bool HasActiveFilters { get; set; }
+    public int PageNumber { get; set; }
+    public int PageSize { get; set; }
+    public int TotalRecords { get; set; }
+    public int TotalPages { get; set; }
 }

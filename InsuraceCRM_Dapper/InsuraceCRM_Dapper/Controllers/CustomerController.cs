@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
@@ -24,6 +25,7 @@ namespace InsuraceCRM_Dapper.Controllers;
 [Authorize]
 public class CustomerController : Controller
 {
+    private const int CustomersPageSize = 200;
     private readonly ICustomerService _customerService;
     private readonly IUserService _userService;
     private static readonly string[] RequiredImportColumns = new[] { "Name", "Email", "MobileNumber", "Location" };
@@ -110,7 +112,7 @@ public class CustomerController : Controller
         return File(csvBytes, "text/csv", "customer-template.csv");
     }
 
-    public async Task<IActionResult> Index([FromQuery] CustomerFilterInputModel? filters)
+    public async Task<IActionResult> Index([FromQuery] CustomerFilterInputModel? filters, [FromQuery] int page = 1)
     {
         var currentUser = await GetCurrentUserAsync();
         if (currentUser is null)
@@ -118,7 +120,7 @@ public class CustomerController : Controller
             return Challenge();
         }
 
-        var viewModel = await BuildCustomerListViewModelAsync(currentUser, filters: filters);
+        var viewModel = await BuildCustomerListViewModelAsync(currentUser, filters: filters, pageNumber: page);
         return View(viewModel);
     }
 
@@ -131,8 +133,7 @@ public class CustomerController : Controller
             return Challenge();
         }
 
-        var viewModel = await BuildCustomerListViewModelAsync(currentUser);
-        var customers = viewModel.Customers.ToList();
+        var customers = await GetCustomersWithAssignmentsAsync(currentUser);
         var normalizedFormat = format?.Trim().ToLowerInvariant();
 
         return normalizedFormat switch
@@ -323,12 +324,8 @@ public class CustomerController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    private async Task<CustomerListViewModel> BuildCustomerListViewModelAsync(
-        User currentUser,
-        CustomerInputModel? newCustomer = null,
-        CustomerFilterInputModel? filters = null)
+    private async Task<List<Customer>> GetCustomersWithAssignmentsAsync(User currentUser)
     {
-        filters ??= new CustomerFilterInputModel();
         var customers = (await _customerService.GetCustomersForUserAsync(currentUser)).ToList();
         var userLookup = (await _userService.GetAllUsersAsync(includeInactive: true))
             .ToDictionary(u => u.Id, u => u.FullName);
@@ -342,15 +339,40 @@ public class CustomerController : Controller
             }
         }
 
+        return customers;
+    }
+
+    private async Task<CustomerListViewModel> BuildCustomerListViewModelAsync(
+        User currentUser,
+        CustomerInputModel? newCustomer = null,
+        CustomerFilterInputModel? filters = null,
+        int pageNumber = 1)
+    {
+        filters ??= new CustomerFilterInputModel();
+        var customers = await GetCustomersWithAssignmentsAsync(currentUser);
+
         var filteredCustomers = ApplyCustomerFilters(customers, filters).ToList();
+        var totalRecords = filteredCustomers.Count;
+        var totalPages = totalRecords == 0
+            ? 1
+            : (int)Math.Ceiling(totalRecords / (double)CustomersPageSize);
+        var currentPage = Math.Clamp(pageNumber, 1, totalPages);
+        var pagedCustomers = filteredCustomers
+            .Skip((currentPage - 1) * CustomersPageSize)
+            .Take(CustomersPageSize)
+            .ToList();
 
         return new CustomerListViewModel
         {
-            Customers = filteredCustomers,
+            Customers = pagedCustomers,
             CanEdit = IsManagerOrAdmin(currentUser.Role),
             NewCustomer = newCustomer ?? new CustomerInputModel(),
             Filters = filters,
-            HasActiveFilters = filters.HasValues
+            HasActiveFilters = filters.HasValues,
+            PageNumber = currentPage,
+            PageSize = CustomersPageSize,
+            TotalRecords = totalRecords,
+            TotalPages = totalPages
         };
     }
 
