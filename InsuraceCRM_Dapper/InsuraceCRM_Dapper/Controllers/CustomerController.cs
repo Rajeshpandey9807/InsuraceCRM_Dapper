@@ -339,7 +339,7 @@ public class CustomerController : Controller
         return new CustomerCreateViewModel
         {
             NewCustomer = newCustomer ?? new CustomerInputModel(),
-            BulkUploadErrors = bulkUploadErrors?.ToList() ?? Array.Empty<string>()
+            BulkUploadErrors = bulkUploadErrors?.ToArray() ?? Array.Empty<string>()
         };
     }
 
