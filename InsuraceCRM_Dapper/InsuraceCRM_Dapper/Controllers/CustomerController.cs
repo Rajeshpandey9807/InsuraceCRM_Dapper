@@ -25,7 +25,7 @@ namespace InsuraceCRM_Dapper.Controllers;
 [Authorize]
 public class CustomerController : Controller
 {
-    private const int DefaultPageSize = 200;
+    private const int DefaultPageSize = 50;
     private const int MinPageSize = 50;
     private const int MaxPageSize = 200;
     private static readonly int[] PageSizeChoices = { 50, 100, 150, 200 };
