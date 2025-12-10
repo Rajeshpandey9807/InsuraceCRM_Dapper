@@ -18,7 +18,7 @@
     <h2 class="mb-0">Customers</h2>
     <div class="d-flex flex-wrap gap-2">
         <div class="btn-group">
-            <a asp-action="Index" class="btn btn-outline-secondary">Refresh</a>
+            <a asp-action="Index" asp-route-pageSize="@Model.PageSize" class="btn btn-outline-secondary">Refresh</a>
             @if (Model.CanEdit)
             {
                 <a asp-action="BulkAssign" class="btn btn-outline-primary">Bulk Assign</a>
@@ -187,11 +187,22 @@
                     </option>
                 </select>
             </div>
+            <div class="col-12 col-lg-3">
+                <label class="form-label text-muted fw-semibold">Records per page</label>
+                <select name="pageSize" class="form-select">
+                    @foreach (var option in Model.PageSizeOptions)
+                    {
+                        <option value="@option" selected="@(option == Model.PageSize ? "selected" : null)">
+                            @option
+                        </option>
+                    }
+                </select>
+            </div>
             <div class="col-12 d-flex flex-wrap gap-2">
                 <button type="submit" class="btn btn-primary">
                     Apply Filters
                 </button>
-                <a asp-action="Index" class="btn btn-outline-secondary">
+                <a asp-action="Index" asp-route-pageSize="@Model.PageSize" class="btn btn-outline-secondary">
                     Reset
                 </a>
             </div>
@@ -202,8 +213,8 @@
 @if (Model.HasActiveFilters)
 {
     <div class="alert alert-info d-flex justify-content-between align-items-center gap-2 mb-3">
-        <span class="mb-0">Filters applied. Showing @Model.Customers.Count() matching customer(s).</span>
-        <a asp-action="Index" class="btn btn-sm btn-outline-light">Clear filters</a>
+        <span class="mb-0">Filters applied. Showing @Model.TotalRecords matching customer(s).</span>
+        <a asp-action="Index" asp-route-pageSize="@Model.PageSize" class="btn btn-sm btn-outline-light">Clear filters</a>
     </div>
 }
 
@@ -313,6 +324,7 @@
                     <li class="page-item @(Model.PageNumber == 1 ? "disabled" : null)">
                         <a class="page-link"
                            asp-action="Index"
+                           asp-route-pageSize="@Model.PageSize"
                            asp-route-page="@(Model.PageNumber <= 1 ? 1 : Model.PageNumber - 1)"
                            asp-route-SearchTerm="@filters.SearchTerm"
                            asp-route-Location="@filters.Location"
@@ -325,6 +337,7 @@
                     <li class="page-item @(Model.PageNumber == Model.TotalPages ? "disabled" : null)">
                         <a class="page-link"
                            asp-action="Index"
+                           asp-route-pageSize="@Model.PageSize"
                            asp-route-page="@(Model.PageNumber >= Model.TotalPages ? Model.TotalPages : Model.PageNumber + 1)"
                            asp-route-SearchTerm="@filters.SearchTerm"
                            asp-route-Location="@filters.Location"

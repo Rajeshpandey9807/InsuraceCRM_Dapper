@@ -25,7 +25,10 @@ namespace InsuraceCRM_Dapper.Controllers;
 [Authorize]
 public class CustomerController : Controller
 {
-    private const int CustomersPageSize = 200;
+    private const int DefaultPageSize = 200;
+    private const int MinPageSize = 50;
+    private const int MaxPageSize = 200;
+    private static readonly int[] PageSizeChoices = { 50, 100, 150, 200 };
     private readonly ICustomerService _customerService;
     private readonly IUserService _userService;
     private static readonly string[] RequiredImportColumns = new[] { "Name", "Email", "MobileNumber", "Location" };
@@ -112,7 +115,10 @@ public class CustomerController : Controller
         return File(csvBytes, "text/csv", "customer-template.csv");
     }
 
-    public async Task<IActionResult> Index([FromQuery] CustomerFilterInputModel? filters, [FromQuery] int page = 1)
+    public async Task<IActionResult> Index(
+        [FromQuery] CustomerFilterInputModel? filters,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = DefaultPageSize)
     {
         var currentUser = await GetCurrentUserAsync();
         if (currentUser is null)
@@ -120,7 +126,12 @@ public class CustomerController : Controller
             return Challenge();
         }
 
-        var viewModel = await BuildCustomerListViewModelAsync(currentUser, filters: filters, pageNumber: page);
+        var normalizedPageSize = NormalizePageSize(pageSize);
+        var viewModel = await BuildCustomerListViewModelAsync(
+            currentUser,
+            filters: filters,
+            pageNumber: page,
+            pageSize: normalizedPageSize);
         return View(viewModel);
     }
 
@@ -346,20 +357,22 @@ public class CustomerController : Controller
         User currentUser,
         CustomerInputModel? newCustomer = null,
         CustomerFilterInputModel? filters = null,
-        int pageNumber = 1)
+        int pageNumber = 1,
+        int pageSize = DefaultPageSize)
     {
         filters ??= new CustomerFilterInputModel();
+        var normalizedPageSize = NormalizePageSize(pageSize);
         var customers = await GetCustomersWithAssignmentsAsync(currentUser);
 
         var filteredCustomers = ApplyCustomerFilters(customers, filters).ToList();
         var totalRecords = filteredCustomers.Count;
         var totalPages = totalRecords == 0
             ? 1
-            : (int)Math.Ceiling(totalRecords / (double)CustomersPageSize);
+            : (int)Math.Ceiling(totalRecords / (double)normalizedPageSize);
         var currentPage = Math.Clamp(pageNumber, 1, totalPages);
         var pagedCustomers = filteredCustomers
-            .Skip((currentPage - 1) * CustomersPageSize)
-            .Take(CustomersPageSize)
+            .Skip((currentPage - 1) * normalizedPageSize)
+            .Take(normalizedPageSize)
             .ToList();
 
         return new CustomerListViewModel
@@ -370,9 +383,10 @@ public class CustomerController : Controller
             Filters = filters,
             HasActiveFilters = filters.HasValues,
             PageNumber = currentPage,
-            PageSize = CustomersPageSize,
+            PageSize = normalizedPageSize,
             TotalRecords = totalRecords,
-            TotalPages = totalPages
+            TotalPages = totalPages,
+            PageSizeOptions = PageSizeChoices
         };
     }
 
@@ -421,6 +435,12 @@ public class CustomerController : Controller
         }
 
         return query;
+    }
+
+    private static int NormalizePageSize(int pageSize)
+    {
+        var clamped = Math.Clamp(pageSize, MinPageSize, MaxPageSize);
+        return PageSizeChoices.Contains(clamped) ? clamped : DefaultPageSize;
     }
 
     private async Task<BulkAssignCustomersViewModel> BuildBulkAssignViewModelAsync(
