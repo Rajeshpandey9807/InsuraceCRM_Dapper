@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Globalization;
 using System.IO;
@@ -25,7 +26,8 @@ public class CustomerController : Controller
 {
     private readonly ICustomerService _customerService;
     private readonly IUserService _userService;
-    private static readonly string[] RequiredImportColumns = new[] { "Name", "MobileNumber", "Location" };
+    private static readonly string[] RequiredImportColumns = new[] { "Name", "Email", "MobileNumber", "Location" };
+    private static readonly EmailAddressAttribute EmailValidator = new();
 
     public CustomerController(ICustomerService customerService, IUserService userService)
     {
@@ -99,9 +101,9 @@ public class CustomerController : Controller
     {
         var lines = new[]
         {
-            "Name,MobileNumber,Location,InsuranceType,Income,SourceOfIncome,FamilyMembers",
-            "John Doe,9999999999,Mumbai,Life Insurance,750000,Salary,4",
-            "Jane Smith,8888888888,Bengaluru,Health Insurance,550000,Business,3"
+            "Name,Email,MobileNumber,Location,InsuranceType,Income,SourceOfIncome",
+            "John Doe,john.doe@example.com,9999999999,Mumbai,Life Insurance,750000,Salary",
+            "Jane Smith,jane.smith@example.com,8888888888,Bengaluru,Health Insurance,550000,Business"
         };
 
         var csvBytes = Encoding.UTF8.GetBytes(string.Join('\n', lines));
@@ -363,6 +365,7 @@ public class CustomerController : Controller
             var term = filters.SearchTerm.Trim();
             query = query.Where(customer =>
                 (!string.IsNullOrWhiteSpace(customer.Name) && customer.Name.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrWhiteSpace(customer.Email) && customer.Email.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
                 (!string.IsNullOrWhiteSpace(customer.MobileNumber) && customer.MobileNumber.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
                 (!string.IsNullOrWhiteSpace(customer.Location) && customer.Location.Contains(term, StringComparison.OrdinalIgnoreCase)));
         }
@@ -442,6 +445,7 @@ public class CustomerController : Controller
         var headers = new[]
         {
             "Name",
+            "Email",
             "Mobile",
             "Location",
             "Insurance Type",
@@ -461,13 +465,14 @@ public class CustomerController : Controller
         foreach (var customer in customers)
         {
             worksheet.Cell(row, 1).Value = customer.Name;
-            worksheet.Cell(row, 2).Value = customer.MobileNumber;
-            worksheet.Cell(row, 3).Value = customer.Location;
-            worksheet.Cell(row, 4).Value = customer.InsuranceType ?? "-";
-            worksheet.Cell(row, 5).Value = customer.Income.HasValue ? customer.Income.Value : "-";
-            worksheet.Cell(row, 6).Value = customer.SourceOfIncome ?? "-";
-            worksheet.Cell(row, 7).Value = customer.FamilyMembers.HasValue ? customer.FamilyMembers.Value : "-";
-            worksheet.Cell(row, 8).Value = customer.AssignedEmployeeName ?? "Unassigned";
+            worksheet.Cell(row, 2).Value = customer.Email;
+            worksheet.Cell(row, 3).Value = customer.MobileNumber;
+            worksheet.Cell(row, 4).Value = customer.Location;
+            worksheet.Cell(row, 5).Value = customer.InsuranceType ?? "-";
+            worksheet.Cell(row, 6).Value = customer.Income.HasValue ? customer.Income.Value : "-";
+            worksheet.Cell(row, 7).Value = customer.SourceOfIncome ?? "-";
+            worksheet.Cell(row, 8).Value = customer.FamilyMembers.HasValue ? customer.FamilyMembers.Value : "-";
+            worksheet.Cell(row, 9).Value = customer.AssignedEmployeeName ?? "Unassigned";
             row++;
         }
 
@@ -499,6 +504,7 @@ public class CustomerController : Controller
                         columns.RelativeColumn(2);
                         columns.RelativeColumn(2);
                         columns.RelativeColumn(2);
+                        columns.RelativeColumn(2);
                         columns.RelativeColumn(1.5f);
                         columns.RelativeColumn(2);
                     });
@@ -506,6 +512,7 @@ public class CustomerController : Controller
                     table.Header(header =>
                     {
                         header.Cell().Element(CellStyle).Text("Name").SemiBold();
+                        header.Cell().Element(CellStyle).Text("Email").SemiBold();
                         header.Cell().Element(CellStyle).Text("Mobile").SemiBold();
                         header.Cell().Element(CellStyle).Text("Location").SemiBold();
                         header.Cell().Element(CellStyle).Text("Insurance").SemiBold();
@@ -516,6 +523,7 @@ public class CustomerController : Controller
                     foreach (var customer in customers)
                     {
                         table.Cell().Element(CellStyle).Text(customer.Name);
+                        table.Cell().Element(CellStyle).Text(customer.Email);
                         table.Cell().Element(CellStyle).Text(customer.MobileNumber);
                         table.Cell().Element(CellStyle).Text(customer.Location);
                         table.Cell().Element(CellStyle).Text(customer.InsuranceType ?? "-");
@@ -712,6 +720,7 @@ public class CustomerController : Controller
         ImportResult result)
     {
         var name = GetTrimmedValue(rowValues, "Name");
+        var email = GetTrimmedValue(rowValues, "Email");
         var mobile = GetTrimmedValue(rowValues, "MobileNumber");
         var location = GetTrimmedValue(rowValues, "Location");
 
@@ -726,6 +735,18 @@ public class CustomerController : Controller
         if (string.IsNullOrWhiteSpace(name))
         {
             result.Errors.Add($"Row {rowNumber}: Name is required.");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            result.Errors.Add($"Row {rowNumber}: Email is required.");
+            return;
+        }
+
+        if (!EmailValidator.IsValid(email))
+        {
+            result.Errors.Add($"Row {rowNumber}: Email '{email}' is invalid.");
             return;
         }
 
@@ -774,6 +795,7 @@ public class CustomerController : Controller
         var customer = new Customer
         {
             Name = name!,
+            Email = email!,
             MobileNumber = mobile!,
             Location = location!,
             InsuranceType = GetTrimmedValue(rowValues, "InsuranceType"),
@@ -803,6 +825,7 @@ public class CustomerController : Controller
         return compact switch
         {
             "name" or "customername" => "Name",
+            "email" or "emailid" or "emailaddress" => "Email",
             "mobile" or "mobilenumber" or "mobileno" or "phonenumber" or "phone" or "contactnumber" => "MobileNumber",
             "location" or "city" or "area" => "Location",
             "insurancetype" or "insurance" => "InsuranceType",

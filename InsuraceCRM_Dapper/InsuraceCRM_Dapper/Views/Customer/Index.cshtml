@@ -62,11 +62,16 @@
                     <form asp-action="CreateInline" method="post" novalidate>
                         @Html.AntiForgeryToken()
                         <div class="row g-3">
-                            <div class="col-md-6">
-                                <label asp-for="NewCustomer.Name" class="form-label"></label>
-                                <input asp-for="NewCustomer.Name" class="form-control" />
-                                <span asp-validation-for="NewCustomer.Name" class="text-danger"></span>
-                            </div>
+                        <div class="col-md-6">
+                            <label asp-for="NewCustomer.Name" class="form-label"></label>
+                            <input asp-for="NewCustomer.Name" class="form-control" />
+                            <span asp-validation-for="NewCustomer.Name" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="NewCustomer.Email" class="form-label"></label>
+                            <input asp-for="NewCustomer.Email" class="form-control" />
+                            <span asp-validation-for="NewCustomer.Email" class="text-danger"></span>
+                        </div>
                             <div class="col-md-6">
                                 <label asp-for="NewCustomer.MobileNumber" class="form-label"></label>
                                 <input asp-for="NewCustomer.MobileNumber" class="form-control" />
@@ -92,11 +97,6 @@
                                 <input asp-for="NewCustomer.SourceOfIncome" class="form-control" />
                                 <span asp-validation-for="NewCustomer.SourceOfIncome" class="text-danger"></span>
                             </div>
-                            <div class="col-md-6">
-                                <label asp-for="NewCustomer.FamilyMembers" class="form-label"></label>
-                                <input asp-for="NewCustomer.FamilyMembers" class="form-control" type="number" min="0" step="1" />
-                                <span asp-validation-for="NewCustomer.FamilyMembers" class="text-danger"></span>
-                            </div>
                         </div>
                         <div class="d-flex gap-2 mt-4">
                             <button type="submit" class="btn btn-primary">Save Customer</button>
@@ -118,8 +118,8 @@
                             @Html.ValidationMessage("BulkUpload", null, new { @class = "text-danger d-block mt-1" })
                         </div>
                         <p class="text-muted small mb-3">
-                            Required columns: <strong>Name</strong>, <strong>MobileNumber</strong>, <strong>Location</strong>.
-                            Optional columns: InsuranceType, Income, SourceOfIncome, FamilyMembers.
+                            Required columns: <strong>Name</strong>, <strong>Email</strong>, <strong>MobileNumber</strong>, <strong>Location</strong>.
+                            Optional columns: InsuranceType, Income, SourceOfIncome.
                         </p>
                         <div class="mb-3">
                             <a asp-action="DownloadTemplate" class="btn btn-link px-0">Download sample template</a>
@@ -212,6 +212,7 @@
                 <thead>
                     <tr>
                         <th>Name</th>
+                        <th>Email</th>
                         <th>Mobile</th>
                         <th>Location</th>
                         <th>Insurance Type</th>
@@ -227,6 +228,7 @@
                     {
                         <tr>
                             <td>@customer.Name</td>
+                            <td>@(string.IsNullOrWhiteSpace(customer.Email) ? "-" : customer.Email)</td>
                             <td>@customer.MobileNumber</td>
                             <td>@(string.IsNullOrWhiteSpace(customer.Location) ? "-" : customer.Location)</td>
                             <td>@(string.IsNullOrWhiteSpace(customer.InsuranceType) ? "-" : customer.InsuranceType)</td>

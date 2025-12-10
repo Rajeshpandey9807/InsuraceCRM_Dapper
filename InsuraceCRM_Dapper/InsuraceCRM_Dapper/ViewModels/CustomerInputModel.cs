@@ -8,6 +8,9 @@ public class CustomerInputModel
     [Required, StringLength(150)]
     public string Name { get; set; } = string.Empty;
 
+    [Required, EmailAddress, StringLength(256)]
+    public string Email { get; set; } = string.Empty;
+
     [Required, Phone]
     public string MobileNumber { get; set; } = string.Empty;
 
@@ -23,19 +26,16 @@ public class CustomerInputModel
     [StringLength(150)]
     public string? SourceOfIncome { get; set; }
 
-    [Range(0, 50, ErrorMessage = "Family members must be between 0 and 50.")]
-    public int? FamilyMembers { get; set; }
-
     public Customer ToCustomer(int createdBy) =>
         new()
         {
             Name = Name?.Trim() ?? string.Empty,
+            Email = Email?.Trim() ?? string.Empty,
             MobileNumber = MobileNumber?.Trim() ?? string.Empty,
             Location = Location?.Trim() ?? string.Empty,
             InsuranceType = string.IsNullOrWhiteSpace(InsuranceType) ? null : InsuranceType.Trim(),
             Income = Income,
             SourceOfIncome = string.IsNullOrWhiteSpace(SourceOfIncome) ? null : SourceOfIncome.Trim(),
-            FamilyMembers = FamilyMembers,
             CreatedBy = createdBy
         };
 }
