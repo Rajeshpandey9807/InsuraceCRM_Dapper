@@ -83,12 +83,10 @@ public class CustomerController : Controller
                 if (importResult.Errors.Count > 0)
                 {
                     ModelState.AddModelError("BulkUpload", "Unable to import any rows. Review the errors below.");
-                    ViewData["BulkUploadErrors"] = importResult.Errors;
+                    return View("Create", BuildCustomerCreateViewModel(bulkUploadErrors: importResult.Errors));
                 }
-                else
-                {
-                    ModelState.AddModelError("BulkUpload", "No valid data rows were found in the file.");
-                }
+
+                ModelState.AddModelError("BulkUpload", "No valid data rows were found in the file.");
             }
             catch (CustomerImportException ex)
             {
@@ -96,8 +94,7 @@ public class CustomerController : Controller
             }
         }
 
-        var viewModel = await BuildCustomerListViewModelAsync(currentUser);
-        return View("Index", viewModel);
+        return View("Create", BuildCustomerCreateViewModel());
     }
 
     [Authorize(Roles = "Admin,Manager")]
@@ -183,36 +180,16 @@ public class CustomerController : Controller
 
     [Authorize(Roles = "Admin,Manager")]
     [HttpGet]
-    public IActionResult Add()
+    public IActionResult Create()
     {
-        return View(new Customer());
+        var viewModel = BuildCustomerCreateViewModel();
+        return View(viewModel);
     }
 
     [Authorize(Roles = "Admin,Manager")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Add(Customer customer)
-    {
-        if (!ModelState.IsValid)
-        {
-            return View(customer);
-        }
-
-        var currentUser = await GetCurrentUserAsync();
-        if (currentUser is null)
-        {
-            return Challenge();
-        }
-
-        customer.CreatedBy = currentUser.Id;
-        await _customerService.CreateCustomerAsync(customer);
-        return RedirectToAction(nameof(Index));
-    }
-
-    [Authorize(Roles = "Admin,Manager")]
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CreateInline([Bind(Prefix = "NewCustomer")] CustomerInputModel inputModel)
+    public async Task<IActionResult> Create([Bind(Prefix = nameof(CustomerCreateViewModel.NewCustomer))] CustomerInputModel inputModel)
     {
         var currentUser = await GetCurrentUserAsync();
         if (currentUser is null)
@@ -222,8 +199,8 @@ public class CustomerController : Controller
 
         if (!ModelState.IsValid)
         {
-            var viewModel = await BuildCustomerListViewModelAsync(currentUser, inputModel);
-            return View("Index", viewModel);
+            var viewModel = BuildCustomerCreateViewModel(inputModel);
+            return View(viewModel);
         }
 
         var customer = inputModel.ToCustomer(currentUser.Id);
@@ -355,6 +332,17 @@ public class CustomerController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    private CustomerCreateViewModel BuildCustomerCreateViewModel(
+        CustomerInputModel? newCustomer = null,
+        IEnumerable<string>? bulkUploadErrors = null)
+    {
+        return new CustomerCreateViewModel
+        {
+            NewCustomer = newCustomer ?? new CustomerInputModel(),
+            BulkUploadErrors = bulkUploadErrors?.ToList() ?? Array.Empty<string>()
+        };
+    }
+
     private async Task<List<Customer>> GetCustomersWithAssignmentsAsync(User currentUser)
     {
         var customers = (await _customerService.GetCustomersForUserAsync(currentUser)).ToList();
@@ -375,7 +363,6 @@ public class CustomerController : Controller
 
     private async Task<CustomerListViewModel> BuildCustomerListViewModelAsync(
         User currentUser,
-        CustomerInputModel? newCustomer = null,
         CustomerFilterInputModel? filters = null,
         int pageNumber = 1,
         int pageSize = DefaultPageSize)
@@ -399,7 +386,6 @@ public class CustomerController : Controller
         {
             Customers = pagedCustomers,
             CanEdit = IsManagerOrAdmin(currentUser.Role),
-            NewCustomer = newCustomer ?? new CustomerInputModel(),
             Filters = filters,
             HasActiveFilters = filters.HasValues,
             PageNumber = currentPage,

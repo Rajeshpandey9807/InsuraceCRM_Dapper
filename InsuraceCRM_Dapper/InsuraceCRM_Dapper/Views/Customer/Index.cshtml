@@ -3,7 +3,6 @@
 @using System.Linq
 @{
     ViewData["Title"] = "Customers";
-    var bulkErrors = ViewData["BulkUploadErrors"] as IList<string>;
     var rawImportErrors = TempData["CustomerImportErrors"] as string;
     var importErrorLines = rawImportErrors?
         .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -35,6 +34,12 @@
             <a asp-action="Export" asp-route-format="excel" class="btn btn-outline-success">Export Excel</a>
             <a asp-action="Export" asp-route-format="pdf" class="btn btn-outline-danger">Export PDF</a>
         </div>
+        @if (Model.CanEdit)
+        {
+            <div class="btn-group">
+                <a asp-action="Create" class="btn btn-primary">Create Customer</a>
+            </div>
+        }
     </div>
 </div>
 
@@ -57,98 +62,6 @@
             }
         </ul>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
-
-@if (Model.CanEdit)
-{
-    <div class="row g-3 mb-4">
-        <div class="col-xl-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h4 class="card-title mb-3">Add Single Customer</h4>
-                    <form asp-action="CreateInline" method="post" novalidate>
-                        @Html.AntiForgeryToken()
-                        <div class="row g-3">
-                        <div class="col-md-6">
-                            <label asp-for="NewCustomer.Name" class="form-label"></label>
-                            <input asp-for="NewCustomer.Name" class="form-control" />
-                            <span asp-validation-for="NewCustomer.Name" class="text-danger"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="NewCustomer.Email" class="form-label"></label>
-                            <input asp-for="NewCustomer.Email" class="form-control" />
-                            <span asp-validation-for="NewCustomer.Email" class="text-danger"></span>
-                        </div>
-                            <div class="col-md-6">
-                                <label asp-for="NewCustomer.MobileNumber" class="form-label"></label>
-                                <input asp-for="NewCustomer.MobileNumber" class="form-control" />
-                                <span asp-validation-for="NewCustomer.MobileNumber" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="NewCustomer.Location" class="form-label"></label>
-                                <input asp-for="NewCustomer.Location" class="form-control" />
-                                <span asp-validation-for="NewCustomer.Location" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="NewCustomer.InsuranceType" class="form-label"></label>
-                                <input asp-for="NewCustomer.InsuranceType" class="form-control" />
-                                <span asp-validation-for="NewCustomer.InsuranceType" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="NewCustomer.Income" class="form-label"></label>
-                                <input asp-for="NewCustomer.Income" class="form-control" type="number" min="0" step="0.01" />
-                                <span asp-validation-for="NewCustomer.Income" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="NewCustomer.SourceOfIncome" class="form-label"></label>
-                                <input asp-for="NewCustomer.SourceOfIncome" class="form-control" />
-                                <span asp-validation-for="NewCustomer.SourceOfIncome" class="text-danger"></span>
-                            </div>
-                        </div>
-                        <div class="d-flex gap-2 mt-4">
-                            <button type="submit" class="btn btn-primary">Save Customer</button>
-                            <a asp-action="Add" class="btn btn-outline-secondary">Advanced form</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h4 class="card-title mb-3">Bulk Upload Customers</h4>
-                    <form asp-action="BulkUpload" method="post" enctype="multipart/form-data">
-                        @Html.AntiForgeryToken()
-                        <div class="mb-3">
-                            <label for="bulkFile" class="form-label">Upload CSV or Excel file</label>
-                            <input class="form-control" type="file" id="bulkFile" name="file" accept=".csv,.xlsx,.xls" required />
-                            @Html.ValidationMessage("BulkUpload", null, new { @class = "text-danger d-block mt-1" })
-                        </div>
-                        <p class="text-muted small mb-3">
-                            Required columns: <strong>Name</strong>, <strong>Email</strong>, <strong>MobileNumber</strong>, <strong>Location</strong>.
-                            Optional columns: InsuranceType, Income, SourceOfIncome.
-                        </p>
-                        <div class="mb-3">
-                            <a asp-action="DownloadTemplate" class="btn btn-link px-0">Download sample template</a>
-                        </div>
-                        @if (bulkErrors?.Count > 0)
-                        {
-                            <div class="alert alert-warning small" role="alert">
-                                <strong>Import issues detected:</strong>
-                                <ul class="mb-0 mt-2 ps-3">
-                                    @foreach (var error in bulkErrors)
-                                    {
-                                        <li>@error</li>
-                                    }
-                                </ul>
-                            </div>
-                        }
-                        <button type="submit" class="btn btn-outline-primary">Upload Customers</button>
-                    </form>
-                </div>
-            </div>
-        </div>
     </div>
 }
 
