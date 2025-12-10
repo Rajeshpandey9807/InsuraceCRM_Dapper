@@ -19,6 +19,13 @@
     <div class="d-flex flex-wrap gap-2">
         <div class="btn-group">
             <a asp-action="Index" asp-route-pageSize="@Model.PageSize" class="btn btn-outline-secondary">Refresh</a>
+            <a asp-action="DetailsView"
+               asp-route-pageSize="@Model.PageSize"
+               asp-route-SearchTerm="@filters.SearchTerm"
+               asp-route-Location="@filters.Location"
+               asp-route-InsuranceType="@filters.InsuranceType"
+               asp-route-Assignment="@filters.Assignment"
+               class="btn btn-outline-info">Detail cards</a>
             @if (Model.CanEdit)
             {
                 <a asp-action="BulkAssign" class="btn btn-outline-primary">Bulk Assign</a>

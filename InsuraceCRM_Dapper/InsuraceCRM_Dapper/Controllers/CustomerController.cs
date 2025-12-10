@@ -135,6 +135,26 @@ public class CustomerController : Controller
         return View(viewModel);
     }
 
+    public async Task<IActionResult> DetailsView(
+        [FromQuery] CustomerFilterInputModel? filters,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = DefaultPageSize)
+    {
+        var currentUser = await GetCurrentUserAsync();
+        if (currentUser is null)
+        {
+            return Challenge();
+        }
+
+        var normalizedPageSize = NormalizePageSize(pageSize);
+        var viewModel = await BuildCustomerListViewModelAsync(
+            currentUser,
+            filters: filters,
+            pageNumber: page,
+            pageSize: normalizedPageSize);
+        return View("DetailsView", viewModel);
+    }
+
     [HttpGet]
     public async Task<IActionResult> Export(string format = "excel")
     {
