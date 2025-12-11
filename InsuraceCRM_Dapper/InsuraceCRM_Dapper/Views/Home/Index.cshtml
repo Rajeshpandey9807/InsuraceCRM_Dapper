@@ -11,13 +11,21 @@
         .Take(5)
         .ToList() ?? new List<ReminderViewModel>();
 
-    var assignedCustomers = Model?.AssignedCustomerCount ?? 0;
+var totalCustomers = Model?.TotalCustomerCount ?? 0;
+var assignedCustomers = Model?.AssignedCustomerCount ?? 0;
     var todaysCalls = Model?.TodaysCallCount ?? 0;
     var todaysReminders = Model?.TodaysReminderCount ?? reminders.Count;
     var completionRate = todaysReminders == 0
         ? 0
         : (int)Math.Round(Math.Min(100, (double)todaysCalls / todaysReminders * 100));
     var pendingReminders = Math.Max(0, todaysReminders - todaysCalls);
+var isManagerOrAdmin = User.IsInRole("Admin") || User.IsInRole("Manager");
+var customerMetricValue = isManagerOrAdmin ? totalCustomers : assignedCustomers;
+var customerMetricLabel = isManagerOrAdmin ? "Total customers" : "Assigned customers";
+var customerMetricDescription = isManagerOrAdmin
+    ? "All customers currently in the system."
+    : "Customers currently assigned to you.";
+var customerMetricBadge = isManagerOrAdmin ? "Team" : "Mine";
 }
 
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
@@ -39,11 +47,11 @@
         <div class="card shadow-sm h-100">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-uppercase text-muted small">Assigned customers</span>
-                    <span class="badge bg-light text-dark">Live</span>
+                    <span class="text-uppercase text-muted small">@customerMetricLabel</span>
+                    <span class="badge bg-light text-dark">@customerMetricBadge</span>
                 </div>
-                <h3 class="display-6 fw-semibold mb-0">@assignedCustomers</h3>
-                <p class="text-muted small mb-3">Active customers currently assigned across the team.</p>
+                <h3 class="display-6 fw-semibold mb-0">@customerMetricValue</h3>
+                <p class="text-muted small mb-3">@customerMetricDescription</p>
                 <a asp-controller="Customer" asp-action="Index" class="btn btn-sm btn-outline-primary">View customers</a>
             </div>
         </div>

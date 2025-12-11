@@ -1,8 +1,8 @@
 @model CustomerListViewModel
+@using System
 @using System.Linq
 @{
     ViewData["Title"] = "Customers";
-    var bulkErrors = ViewData["BulkUploadErrors"] as IList<string>;
     var rawImportErrors = TempData["CustomerImportErrors"] as string;
     var importErrorLines = rawImportErrors?
         .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -11,13 +11,21 @@
 @using InsuraceCRM_Dapper.ViewModels
 @{
     var filters = Model.Filters ?? new CustomerFilterInputModel();
+    var showCreateDrawer = (ViewData["ShowCreateDrawer"] as bool?) ?? false;
 }
 
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
     <h2 class="mb-0">Customers</h2>
     <div class="d-flex flex-wrap gap-2">
         <div class="btn-group">
-            <a asp-action="Index" class="btn btn-outline-secondary">Refresh</a>
+            <a asp-action="Index" asp-route-pageSize="@Model.PageSize" class="btn btn-outline-secondary">Refresh</a>
+            <a asp-action="DetailsView"
+               asp-route-pageSize="@Model.PageSize"
+               asp-route-SearchTerm="@filters.SearchTerm"
+               asp-route-Location="@filters.Location"
+               asp-route-InsuranceType="@filters.InsuranceType"
+               asp-route-Assignment="@filters.Assignment"
+               class="btn btn-outline-info">Detail cards</a>
             @if (Model.CanEdit)
             {
                 <a asp-action="BulkAssign" class="btn btn-outline-primary">Bulk Assign</a>
@@ -27,6 +35,18 @@
             <a asp-action="Export" asp-route-format="excel" class="btn btn-outline-success">Export Excel</a>
             <a asp-action="Export" asp-route-format="pdf" class="btn btn-outline-danger">Export PDF</a>
         </div>
+        @if (Model.CanEdit)
+        {
+            <div class="btn-group">
+                <button type="button"
+                        class="btn btn-primary"
+                        data-bs-toggle="offcanvas"
+                        data-bs-target="#createCustomerDrawer"
+                        aria-controls="createCustomerDrawer">
+                    Create Customer
+                </button>
+            </div>
+        }
     </div>
 </div>
 
@@ -52,101 +72,10 @@
     </div>
 }
 
-@if (Model.CanEdit)
-{
-    <div class="row g-3 mb-4">
-        <div class="col-xl-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h4 class="card-title mb-3">Add Single Customer</h4>
-                    <form asp-action="CreateInline" method="post" novalidate>
-                        @Html.AntiForgeryToken()
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label asp-for="NewCustomer.Name" class="form-label"></label>
-                                <input asp-for="NewCustomer.Name" class="form-control" />
-                                <span asp-validation-for="NewCustomer.Name" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="NewCustomer.MobileNumber" class="form-label"></label>
-                                <input asp-for="NewCustomer.MobileNumber" class="form-control" />
-                                <span asp-validation-for="NewCustomer.MobileNumber" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="NewCustomer.Location" class="form-label"></label>
-                                <input asp-for="NewCustomer.Location" class="form-control" />
-                                <span asp-validation-for="NewCustomer.Location" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="NewCustomer.InsuranceType" class="form-label"></label>
-                                <input asp-for="NewCustomer.InsuranceType" class="form-control" />
-                                <span asp-validation-for="NewCustomer.InsuranceType" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="NewCustomer.Income" class="form-label"></label>
-                                <input asp-for="NewCustomer.Income" class="form-control" type="number" min="0" step="0.01" />
-                                <span asp-validation-for="NewCustomer.Income" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="NewCustomer.SourceOfIncome" class="form-label"></label>
-                                <input asp-for="NewCustomer.SourceOfIncome" class="form-control" />
-                                <span asp-validation-for="NewCustomer.SourceOfIncome" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="NewCustomer.FamilyMembers" class="form-label"></label>
-                                <input asp-for="NewCustomer.FamilyMembers" class="form-control" type="number" min="0" step="1" />
-                                <span asp-validation-for="NewCustomer.FamilyMembers" class="text-danger"></span>
-                            </div>
-                        </div>
-                        <div class="d-flex gap-2 mt-4">
-                            <button type="submit" class="btn btn-primary">Save Customer</button>
-                            <a asp-action="Add" class="btn btn-outline-secondary">Advanced form</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h4 class="card-title mb-3">Bulk Upload Customers</h4>
-                    <form asp-action="BulkUpload" method="post" enctype="multipart/form-data">
-                        @Html.AntiForgeryToken()
-                        <div class="mb-3">
-                            <label for="bulkFile" class="form-label">Upload CSV or Excel file</label>
-                            <input class="form-control" type="file" id="bulkFile" name="file" accept=".csv,.xlsx,.xls" required />
-                            @Html.ValidationMessage("BulkUpload", null, new { @class = "text-danger d-block mt-1" })
-                        </div>
-                        <p class="text-muted small mb-3">
-                            Required columns: <strong>Name</strong>, <strong>MobileNumber</strong>, <strong>Location</strong>.
-                            Optional columns: InsuranceType, Income, SourceOfIncome, FamilyMembers.
-                        </p>
-                        <div class="mb-3">
-                            <a asp-action="DownloadTemplate" class="btn btn-link px-0">Download sample template</a>
-                        </div>
-                        @if (bulkErrors?.Count > 0)
-                        {
-                            <div class="alert alert-warning small" role="alert">
-                                <strong>Import issues detected:</strong>
-                                <ul class="mb-0 mt-2 ps-3">
-                                    @foreach (var error in bulkErrors)
-                                    {
-                                        <li>@error</li>
-                                    }
-                                </ul>
-                            </div>
-                        }
-                        <button type="submit" class="btn btn-outline-primary">Upload Customers</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
 <div class="card shadow-sm mb-3">
     <div class="card-body">
         <form asp-action="Index" method="get" class="row g-3 align-items-end">
+            <input type="hidden" name="page" value="1" />
             <div class="col-12 col-lg-3">
                 <label class="form-label text-muted fw-semibold">Search</label>
                 <input type="text"
@@ -185,11 +114,22 @@
                     </option>
                 </select>
             </div>
+            <div class="col-12 col-lg-3">
+                <label class="form-label text-muted fw-semibold">Records per page</label>
+                <select name="pageSize" class="form-select">
+                    @foreach (var option in Model.PageSizeOptions)
+                    {
+                        <option value="@option" selected="@(option == Model.PageSize ? "selected" : null)">
+                            @option
+                        </option>
+                    }
+                </select>
+            </div>
             <div class="col-12 d-flex flex-wrap gap-2">
                 <button type="submit" class="btn btn-primary">
                     Apply Filters
                 </button>
-                <a asp-action="Index" class="btn btn-outline-secondary">
+                <a asp-action="Index" asp-route-pageSize="@Model.PageSize" class="btn btn-outline-secondary">
                     Reset
                 </a>
             </div>
@@ -197,11 +137,89 @@
     </div>
 </div>
 
+@if (Model.CanEdit)
+{
+    <div class="offcanvas offcanvas-end customer-create-drawer" tabindex="-1" id="createCustomerDrawer" aria-labelledby="createCustomerDrawerLabel">
+        <div class="offcanvas-header border-bottom">
+            <h5 class="offcanvas-title" id="createCustomerDrawerLabel">Create Customer</h5>
+            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <form asp-action="CreateInline" method="post" novalidate>
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="page" value="@Model.PageNumber" />
+                <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                <input type="hidden" name="filters.SearchTerm" value="@filters.SearchTerm" />
+                <input type="hidden" name="filters.Location" value="@filters.Location" />
+                <input type="hidden" name="filters.InsuranceType" value="@filters.InsuranceType" />
+                <input type="hidden" name="filters.Assignment" value="@filters.Assignment" />
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="NewCustomer.Name" class="form-label"></label>
+                        <input asp-for="NewCustomer.Name" class="form-control" />
+                        <span asp-validation-for="NewCustomer.Name" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="NewCustomer.Email" class="form-label"></label>
+                        <input asp-for="NewCustomer.Email" class="form-control" />
+                        <span asp-validation-for="NewCustomer.Email" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="NewCustomer.MobileNumber" class="form-label"></label>
+                        <input asp-for="NewCustomer.MobileNumber" class="form-control" />
+                        <span asp-validation-for="NewCustomer.MobileNumber" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="NewCustomer.Location" class="form-label"></label>
+                        <input asp-for="NewCustomer.Location" class="form-control" />
+                        <span asp-validation-for="NewCustomer.Location" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="NewCustomer.InsuranceType" class="form-label"></label>
+                        <input asp-for="NewCustomer.InsuranceType" class="form-control" />
+                        <span asp-validation-for="NewCustomer.InsuranceType" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="NewCustomer.Income" class="form-label"></label>
+                        <input asp-for="NewCustomer.Income" class="form-control" type="number" min="0" step="0.01" />
+                        <span asp-validation-for="NewCustomer.Income" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="NewCustomer.SourceOfIncome" class="form-label"></label>
+                        <input asp-for="NewCustomer.SourceOfIncome" class="form-control" />
+                        <span asp-validation-for="NewCustomer.SourceOfIncome" class="text-danger small"></span>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">Save Customer</button>
+                    <a asp-action="Create" class="btn btn-outline-secondary">Advanced form</a>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var shouldOpenDrawer = @showCreateDrawer.ToString().ToLowerInvariant();
+            if (shouldOpenDrawer) {
+                var drawerElement = document.getElementById('createCustomerDrawer');
+                if (drawerElement) {
+                    var drawer = bootstrap.Offcanvas.getOrCreateInstance(drawerElement);
+                    drawer.show();
+                }
+            }
+        });
+    </script>
+}
 @if (Model.HasActiveFilters)
 {
     <div class="alert alert-info d-flex justify-content-between align-items-center gap-2 mb-3">
-        <span class="mb-0">Filters applied. Showing @Model.Customers.Count() matching customer(s).</span>
-        <a asp-action="Index" class="btn btn-sm btn-outline-light">Clear filters</a>
+        <span class="mb-0">Filters applied. Showing @Model.TotalRecords matching customer(s).</span>
+        <a asp-action="Index" asp-route-pageSize="@Model.PageSize" class="btn btn-sm btn-outline-light">Clear filters</a>
     </div>
 }
 
@@ -212,6 +230,7 @@
                 <thead>
                     <tr>
                         <th>Name</th>
+                        <th>Email</th>
                         <th>Mobile</th>
                         <th>Location</th>
                         <th>Insurance Type</th>
@@ -227,6 +246,7 @@
                     {
                         <tr>
                             <td>@customer.Name</td>
+                            <td>@(string.IsNullOrWhiteSpace(customer.Email) ? "-" : customer.Email)</td>
                             <td>@customer.MobileNumber</td>
                             <td>@(string.IsNullOrWhiteSpace(customer.Location) ? "-" : customer.Location)</td>
                             <td>@(string.IsNullOrWhiteSpace(customer.InsuranceType) ? "-" : customer.InsuranceType)</td>
@@ -282,4 +302,56 @@
         </div>
     </div>
 </div>
+
+@{
+    var hasCustomers = Model.TotalRecords > 0;
+    var startRecord = hasCustomers ? ((Model.PageNumber - 1) * Model.PageSize) + 1 : 0;
+    var endRecord = hasCustomers ? Math.Min(Model.TotalRecords, Model.PageNumber * Model.PageSize) : 0;
+}
+
+@if (Model.TotalPages > 1 || hasCustomers)
+{
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-3">
+        <div class="text-muted small">
+            @if (hasCustomers)
+            {
+                <text>Showing @startRecord-@endRecord of @Model.TotalRecords customer(s)</text>
+            }
+            else
+            {
+                <text>No customers found</text>
+            }
+        </div>
+        @if (Model.TotalPages > 1)
+        {
+            <nav aria-label="Customer pagination">
+                <ul class="pagination mb-0">
+                    <li class="page-item @(Model.PageNumber == 1 ? "disabled" : null)">
+                        <a class="page-link"
+                           asp-action="Index"
+                           asp-route-pageSize="@Model.PageSize"
+                           asp-route-page="@(Model.PageNumber <= 1 ? 1 : Model.PageNumber - 1)"
+                           asp-route-SearchTerm="@filters.SearchTerm"
+                           asp-route-Location="@filters.Location"
+                           asp-route-InsuranceType="@filters.InsuranceType"
+                           asp-route-Assignment="@filters.Assignment">Previous</a>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link">Page @Model.PageNumber of @Model.TotalPages</span>
+                    </li>
+                    <li class="page-item @(Model.PageNumber == Model.TotalPages ? "disabled" : null)">
+                        <a class="page-link"
+                           asp-action="Index"
+                           asp-route-pageSize="@Model.PageSize"
+                           asp-route-page="@(Model.PageNumber >= Model.TotalPages ? Model.TotalPages : Model.PageNumber + 1)"
+                           asp-route-SearchTerm="@filters.SearchTerm"
+                           asp-route-Location="@filters.Location"
+                           asp-route-InsuranceType="@filters.InsuranceType"
+                           asp-route-Assignment="@filters.Assignment">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    </div>
+}
 

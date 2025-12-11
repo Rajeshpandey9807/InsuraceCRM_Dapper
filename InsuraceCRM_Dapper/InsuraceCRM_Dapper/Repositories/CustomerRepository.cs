@@ -20,6 +20,7 @@ public class CustomerRepository : ICustomerRepository
         const string sql = @"
             INSERT INTO Customers (
                 Name,
+                Email,
                 MobileNumber,
                 Location,
                 InsuranceType,
@@ -31,6 +32,7 @@ public class CustomerRepository : ICustomerRepository
                 CreatedBy)
             VALUES (
                 @Name,
+                @Email,
                 @MobileNumber,
                 @Location,
                 @InsuranceType,
@@ -51,6 +53,7 @@ public class CustomerRepository : ICustomerRepository
         const string sql = @"
             UPDATE Customers
             SET Name = @Name,
+                Email = @Email,
                 MobileNumber = @MobileNumber,
                 Location = @Location,
                 InsuranceType = @InsuranceType,

@@ -1,0 +1,255 @@
+@model CustomerListViewModel
+@using System
+@using InsuraceCRM_Dapper.ViewModels
+@{
+    ViewData["Title"] = "Customer Details";
+    var filters = Model.Filters ?? new CustomerFilterInputModel();
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h2 class="mb-0">Customer Details</h2>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-action="Index"
+           asp-route-pageSize="@Model.PageSize"
+           asp-route-SearchTerm="@filters.SearchTerm"
+           asp-route-Location="@filters.Location"
+           asp-route-InsuranceType="@filters.InsuranceType"
+           asp-route-Assignment="@filters.Assignment"
+           class="btn btn-outline-secondary">
+            Table view
+        </a>
+        @if (Model.CanEdit)
+        {
+            <a asp-action="Create" class="btn btn-primary">Create Customer</a>
+        }
+    </div>
+</div>
+
+@if (TempData["CustomerSuccess"] is string successMessage)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @successMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form asp-action="DetailsView" method="get" class="row g-3 align-items-end">
+            <input type="hidden" name="page" value="1" />
+            <div class="col-12 col-lg-3">
+                <label class="form-label text-muted fw-semibold">Search</label>
+                <input type="text"
+                       name="SearchTerm"
+                       value="@filters.SearchTerm"
+                       class="form-control"
+                       placeholder="Name, mobile, email or location" />
+            </div>
+            <div class="col-12 col-lg-3">
+                <label class="form-label text-muted fw-semibold">Location</label>
+                <input type="text"
+                       name="Location"
+                       value="@filters.Location"
+                       class="form-control"
+                       placeholder="e.g. Mumbai" />
+            </div>
+            <div class="col-12 col-lg-3">
+                <label class="form-label text-muted fw-semibold">Insurance Type</label>
+                <input type="text"
+                       name="InsuranceType"
+                       value="@filters.InsuranceType"
+                       class="form-control"
+                       placeholder="Health, Life..." />
+            </div>
+            <div class="col-12 col-lg-3">
+                <label class="form-label text-muted fw-semibold">Assignment</label>
+                <select name="Assignment" class="form-select">
+                    <option value="" selected="@(string.IsNullOrWhiteSpace(filters.Assignment) ? "selected" : null)">All</option>
+                    <option value="@CustomerFilterInputModel.AssignmentAssigned"
+                            selected="@(filters.AssignmentEquals(CustomerFilterInputModel.AssignmentAssigned) ? "selected" : null)">
+                        Assigned
+                    </option>
+                    <option value="@CustomerFilterInputModel.AssignmentUnassigned"
+                            selected="@(filters.AssignmentEquals(CustomerFilterInputModel.AssignmentUnassigned) ? "selected" : null)">
+                        Unassigned
+                    </option>
+                </select>
+            </div>
+            <div class="col-12 col-lg-3">
+                <label class="form-label text-muted fw-semibold">Records per page</label>
+                <select name="pageSize" class="form-select">
+                    @foreach (var option in Model.PageSizeOptions)
+                    {
+                        <option value="@option" selected="@(option == Model.PageSize ? "selected" : null)">
+                            @option
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="col-12 d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-primary">
+                    Apply Filters
+                </button>
+                <a asp-action="DetailsView"
+                   asp-route-pageSize="@Model.PageSize"
+                   class="btn btn-outline-secondary">
+                    Reset
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.HasActiveFilters)
+{
+    <div class="alert alert-info d-flex justify-content-between align-items-center gap-2 mb-3">
+        <span class="mb-0">Filters applied. Showing @Model.TotalRecords matching customer(s).</span>
+        <a asp-action="DetailsView"
+           asp-route-pageSize="@Model.PageSize"
+           class="btn btn-sm btn-outline-light">Clear filters</a>
+    </div>
+}
+
+@{
+    var hasCustomers = Model.TotalRecords > 0;
+    var startRecord = hasCustomers ? ((Model.PageNumber - 1) * Model.PageSize) + 1 : 0;
+    var endRecord = hasCustomers ? Math.Min(Model.TotalRecords, Model.PageNumber * Model.PageSize) : 0;
+}
+
+@if (!Model.Customers.Any())
+{
+    <div class="alert alert-light border text-muted">
+        No customers match the selected filters.
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var customer in Model.Customers)
+        {
+            <div class="col-12 col-lg-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body d-flex flex-column gap-3">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <div>
+                                <h5 class="mb-1">@customer.Name</h5>
+                                <span class="badge bg-secondary-subtle text-secondary">
+                                    @(customer.AssignedEmployeeName ?? "Unassigned")
+                                </span>
+                            </div>
+                            <span class="text-muted small">
+                                Created @customer.CreatedDate.ToLocalTime().ToString("dd MMM yyyy")
+                            </span>
+                        </div>
+                        <div class="row g-3 small">
+                            <div class="col-sm-6">
+                                <span class="text-muted d-block">Email</span>
+                                <span>@(string.IsNullOrWhiteSpace(customer.Email) ? "-" : customer.Email)</span>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="text-muted d-block">Mobile</span>
+                                <span>@customer.MobileNumber</span>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="text-muted d-block">Location</span>
+                                <span>@(string.IsNullOrWhiteSpace(customer.Location) ? "-" : customer.Location)</span>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="text-muted d-block">Insurance Type</span>
+                                <span>@(string.IsNullOrWhiteSpace(customer.InsuranceType) ? "-" : customer.InsuranceType)</span>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="text-muted d-block">Income</span>
+                                <span>@(customer.Income.HasValue ? customer.Income.Value.ToString("N2") : "-")</span>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="text-muted d-block">Source of Income</span>
+                                <span>@(string.IsNullOrWhiteSpace(customer.SourceOfIncome) ? "-" : customer.SourceOfIncome)</span>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="text-muted d-block">Family Members</span>
+                                <span>@(customer.FamilyMembers?.ToString() ?? "-")</span>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a asp-controller="FollowUp"
+                               asp-action="History"
+                               asp-route-customerId="@customer.Id"
+                               class="btn btn-sm btn-outline-secondary">
+                                History
+                            </a>
+                            <a asp-controller="SoldProductDetail"
+                               asp-action="Index"
+                               asp-route-customerId="@customer.Id"
+                               asp-route-customerName="@customer.Name"
+                               class="btn btn-sm btn-outline-dark">
+                                Sales
+                            </a>
+                            <a asp-controller="FollowUp"
+                               asp-action="Add"
+                               asp-route-customerId="@customer.Id"
+                               class="btn btn-sm btn-success">
+                                Follow-Up
+                            </a>
+                            @if (Model.CanEdit)
+                            {
+                                <a asp-action="Edit" asp-route-id="@customer.Id" class="btn btn-sm btn-primary">Edit</a>
+                                <a asp-action="AssignCustomer"
+                                   asp-route-customerId="@customer.Id"
+                                   class="btn btn-sm btn-warning">
+                                    Assign
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (Model.TotalPages > 1 || hasCustomers)
+{
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4">
+        <div class="text-muted small">
+            @if (hasCustomers)
+            {
+                <text>Showing @startRecord-@endRecord of @Model.TotalRecords customer(s)</text>
+            }
+            else
+            {
+                <text>No customers found</text>
+            }
+        </div>
+        @if (Model.TotalPages > 1)
+        {
+            <nav aria-label="Customer pagination">
+                <ul class="pagination mb-0">
+                    <li class="page-item @(Model.PageNumber == 1 ? "disabled" : null)">
+                        <a class="page-link"
+                           asp-action="DetailsView"
+                           asp-route-pageSize="@Model.PageSize"
+                           asp-route-page="@(Model.PageNumber <= 1 ? 1 : Model.PageNumber - 1)"
+                           asp-route-SearchTerm="@filters.SearchTerm"
+                           asp-route-Location="@filters.Location"
+                           asp-route-InsuranceType="@filters.InsuranceType"
+                           asp-route-Assignment="@filters.Assignment">Previous</a>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link">Page @Model.PageNumber of @Model.TotalPages</span>
+                    </li>
+                    <li class="page-item @(Model.PageNumber == Model.TotalPages ? "disabled" : null)">
+                        <a class="page-link"
+                           asp-action="DetailsView"
+                           asp-route-pageSize="@Model.PageSize"
+                           asp-route-page="@(Model.PageNumber >= Model.TotalPages ? Model.TotalPages : Model.PageNumber + 1)"
+                           asp-route-SearchTerm="@filters.SearchTerm"
+                           asp-route-Location="@filters.Location"
+                           asp-route-InsuranceType="@filters.InsuranceType"
+                           asp-route-Assignment="@filters.Assignment">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    </div>
+}

@@ -7,12 +7,34 @@ namespace InsuraceCRM_Dapper.Repositories;
 
 public class FollowUpRepository : IFollowUpRepository
 {
+    private const string NormalizedIsConvertedProjection = @"
+        CASE
+            WHEN TRY_CAST(f.IsConverted AS bit) IS NOT NULL THEN TRY_CAST(f.IsConverted AS bit)
+            WHEN LTRIM(RTRIM(LOWER(CAST(f.IsConverted AS NVARCHAR(10))))) IN ('true', 'yes') THEN CAST(1 AS bit)
+            WHEN LTRIM(RTRIM(LOWER(CAST(f.IsConverted AS NVARCHAR(10))))) IN ('false', 'no') THEN CAST(0 AS bit)
+            ELSE NULL
+        END";
     private readonly IDbConnectionFactory _connectionFactory;
 
     public FollowUpRepository(IDbConnectionFactory connectionFactory)
     {
         _connectionFactory = connectionFactory;
     }
+
+    private static string BuildFollowUpSelectColumns() => $@"
+        f.Id,
+        f.CustomerId,
+        f.FollowUpDate,
+        f.InsuranceType,
+        f.Budget,
+        f.HasExistingPolicy,
+        f.FollowUpNote,
+        f.FollowUpStatus,
+        f.NextReminderDateTime,
+        f.ReminderRequired,
+        {NormalizedIsConvertedProjection} AS IsConverted,
+        f.ConversionReason,
+        f.CreatedBy";
 
     public async Task<int> InsertAsync(FollowUp followUp)
     {
@@ -78,14 +100,15 @@ public class FollowUpRepository : IFollowUpRepository
 
     public async Task<FollowUp?> GetByIdAsync(int id)
     {
-        const string sql = @"
-            SELECT f.*,
-                   sp.SoldProductId,
-                   sp.SoldProductName,
-                   sp.TicketSize,
-                   sp.TenureInYears,
-                   sp.PolicyNumber,
-                   sp.PolicyEnforceDate
+        var sql = $@"
+            SELECT
+                {BuildFollowUpSelectColumns()},
+                sp.SoldProductId,
+                sp.SoldProductName,
+                sp.TicketSize,
+                sp.TenureInYears,
+                sp.PolicyNumber,
+                sp.PolicyEnforceDate
             FROM FollowUps f
             LEFT JOIN SoldProductDetails sp ON sp.FollowUpId = f.Id
             WHERE f.Id = @Id;";
@@ -95,14 +118,15 @@ public class FollowUpRepository : IFollowUpRepository
 
     public async Task<IEnumerable<FollowUp>> GetByCustomerIdAsync(int customerId)
     {
-        const string sql = @"
-            SELECT f.*,
-                   sp.SoldProductId,
-                   sp.SoldProductName,
-                   sp.TicketSize,
-                   sp.TenureInYears,
-                   sp.PolicyNumber,
-                   sp.PolicyEnforceDate
+        var sql = $@"
+            SELECT
+                {BuildFollowUpSelectColumns()},
+                sp.SoldProductId,
+                sp.SoldProductName,
+                sp.TicketSize,
+                sp.TenureInYears,
+                sp.PolicyNumber,
+                sp.PolicyEnforceDate
             FROM FollowUps f
             LEFT JOIN SoldProductDetails sp ON sp.FollowUpId = f.Id
             WHERE f.CustomerId = @CustomerId
@@ -114,7 +138,7 @@ public class FollowUpRepository : IFollowUpRepository
 
     public async Task<IEnumerable<UserFollowUpDetail>> GetByEmployeeIdAsync(int employeeId)
     {
-        const string sql = @"
+        var sql = $@"
             SELECT f.Id AS FollowUpId,
                    f.CustomerId,
                    c.Name AS CustomerName,
@@ -128,7 +152,7 @@ public class FollowUpRepository : IFollowUpRepository
                    f.FollowUpNote,
                    f.NextReminderDateTime,
                    f.ReminderRequired,
-                   f.IsConverted,
+                   {NormalizedIsConvertedProjection} AS IsConverted,
                    sp.SoldProductName,
                    sp.TicketSize,
                    sp.TenureInYears,

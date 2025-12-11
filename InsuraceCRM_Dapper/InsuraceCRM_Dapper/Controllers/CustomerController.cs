@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Globalization;
 using System.IO;
@@ -23,9 +25,14 @@ namespace InsuraceCRM_Dapper.Controllers;
 [Authorize]
 public class CustomerController : Controller
 {
+    private const int DefaultPageSize = 50;
+    private const int MinPageSize = 50;
+    private const int MaxPageSize = 200;
+    private static readonly int[] PageSizeChoices = { 50, 100, 150, 200 };
     private readonly ICustomerService _customerService;
     private readonly IUserService _userService;
-    private static readonly string[] RequiredImportColumns = new[] { "Name", "MobileNumber", "Location" };
+    private static readonly string[] RequiredImportColumns = new[] { "Name", "Email", "MobileNumber", "Location" };
+    private static readonly EmailAddressAttribute EmailValidator = new();
 
     public CustomerController(ICustomerService customerService, IUserService userService)
     {
@@ -76,12 +83,10 @@ public class CustomerController : Controller
                 if (importResult.Errors.Count > 0)
                 {
                     ModelState.AddModelError("BulkUpload", "Unable to import any rows. Review the errors below.");
-                    ViewData["BulkUploadErrors"] = importResult.Errors;
+                    return View("Create", BuildCustomerCreateViewModel(bulkUploadErrors: importResult.Errors));
                 }
-                else
-                {
-                    ModelState.AddModelError("BulkUpload", "No valid data rows were found in the file.");
-                }
+
+                ModelState.AddModelError("BulkUpload", "No valid data rows were found in the file.");
             }
             catch (CustomerImportException ex)
             {
@@ -89,8 +94,7 @@ public class CustomerController : Controller
             }
         }
 
-        var viewModel = await BuildCustomerListViewModelAsync(currentUser);
-        return View("Index", viewModel);
+        return View("Create", BuildCustomerCreateViewModel());
     }
 
     [Authorize(Roles = "Admin,Manager")]
@@ -99,16 +103,19 @@ public class CustomerController : Controller
     {
         var lines = new[]
         {
-            "Name,MobileNumber,Location,InsuranceType,Income,SourceOfIncome,FamilyMembers",
-            "John Doe,9999999999,Mumbai,Life Insurance,750000,Salary,4",
-            "Jane Smith,8888888888,Bengaluru,Health Insurance,550000,Business,3"
+            "Name,Email,MobileNumber,Location,InsuranceType,Income,SourceOfIncome",
+            "John Doe,john.doe@example.com,9999999999,Mumbai,Life Insurance,750000,Salary",
+            "Jane Smith,jane.smith@example.com,8888888888,Bengaluru,Health Insurance,550000,Business"
         };
 
         var csvBytes = Encoding.UTF8.GetBytes(string.Join('\n', lines));
         return File(csvBytes, "text/csv", "customer-template.csv");
     }
 
-    public async Task<IActionResult> Index([FromQuery] CustomerFilterInputModel? filters)
+    public async Task<IActionResult> Index(
+        [FromQuery] CustomerFilterInputModel? filters,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = DefaultPageSize)
     {
         var currentUser = await GetCurrentUserAsync();
         if (currentUser is null)
@@ -116,8 +123,33 @@ public class CustomerController : Controller
             return Challenge();
         }
 
-        var viewModel = await BuildCustomerListViewModelAsync(currentUser, filters: filters);
+        var normalizedPageSize = NormalizePageSize(pageSize);
+        var viewModel = await BuildCustomerListViewModelAsync(
+            currentUser,
+            filters: filters,
+            pageNumber: page,
+            pageSize: normalizedPageSize);
         return View(viewModel);
+    }
+
+    public async Task<IActionResult> DetailsView(
+        [FromQuery] CustomerFilterInputModel? filters,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = DefaultPageSize)
+    {
+        var currentUser = await GetCurrentUserAsync();
+        if (currentUser is null)
+        {
+            return Challenge();
+        }
+
+        var normalizedPageSize = NormalizePageSize(pageSize);
+        var viewModel = await BuildCustomerListViewModelAsync(
+            currentUser,
+            filters: filters,
+            pageNumber: page,
+            pageSize: normalizedPageSize);
+        return View("DetailsView", viewModel);
     }
 
     [HttpGet]
@@ -129,8 +161,7 @@ public class CustomerController : Controller
             return Challenge();
         }
 
-        var viewModel = await BuildCustomerListViewModelAsync(currentUser);
-        var customers = viewModel.Customers.ToList();
+        var customers = await GetCustomersWithAssignmentsAsync(currentUser);
         var normalizedFormat = format?.Trim().ToLowerInvariant();
 
         return normalizedFormat switch
@@ -149,36 +180,16 @@ public class CustomerController : Controller
 
     [Authorize(Roles = "Admin,Manager")]
     [HttpGet]
-    public IActionResult Add()
+    public IActionResult Create()
     {
-        return View(new Customer());
+        var viewModel = BuildCustomerCreateViewModel();
+        return View(viewModel);
     }
 
     [Authorize(Roles = "Admin,Manager")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Add(Customer customer)
-    {
-        if (!ModelState.IsValid)
-        {
-            return View(customer);
-        }
-
-        var currentUser = await GetCurrentUserAsync();
-        if (currentUser is null)
-        {
-            return Challenge();
-        }
-
-        customer.CreatedBy = currentUser.Id;
-        await _customerService.CreateCustomerAsync(customer);
-        return RedirectToAction(nameof(Index));
-    }
-
-    [Authorize(Roles = "Admin,Manager")]
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CreateInline([Bind(Prefix = "NewCustomer")] CustomerInputModel inputModel)
+    public async Task<IActionResult> Create([Bind(Prefix = nameof(CustomerCreateViewModel.NewCustomer))] CustomerInputModel inputModel)
     {
         var currentUser = await GetCurrentUserAsync();
         if (currentUser is null)
@@ -188,14 +199,55 @@ public class CustomerController : Controller
 
         if (!ModelState.IsValid)
         {
-            var viewModel = await BuildCustomerListViewModelAsync(currentUser, inputModel);
-            return View("Index", viewModel);
+            var viewModel = BuildCustomerCreateViewModel(inputModel);
+            return View(viewModel);
         }
 
         var customer = inputModel.ToCustomer(currentUser.Id);
         await _customerService.CreateCustomerAsync(customer);
         TempData["CustomerSuccess"] = "Customer added successfully.";
         return RedirectToAction(nameof(Index));
+    }
+
+    [Authorize(Roles = "Admin,Manager")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateInline(
+        [Bind(Prefix = "NewCustomer")] CustomerInputModel inputModel,
+        [FromForm] CustomerFilterInputModel? filters,
+        [FromForm] int page = 1,
+        [FromForm] int pageSize = DefaultPageSize)
+    {
+        var currentUser = await GetCurrentUserAsync();
+        if (currentUser is null)
+        {
+            return Challenge();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            ViewData["ShowCreateDrawer"] = true;
+            var viewModel = await BuildCustomerListViewModelAsync(
+                currentUser,
+                filters: filters,
+                pageNumber: page,
+                pageSize: pageSize,
+                newCustomer: inputModel);
+            return View("Index", viewModel);
+        }
+
+        var customer = inputModel.ToCustomer(currentUser.Id);
+        await _customerService.CreateCustomerAsync(customer);
+        TempData["CustomerSuccess"] = "Customer added successfully.";
+        return RedirectToAction(nameof(Index), new
+        {
+            SearchTerm = filters?.SearchTerm,
+            Location = filters?.Location,
+            InsuranceType = filters?.InsuranceType,
+            Assignment = filters?.Assignment,
+            page,
+            pageSize
+        });
     }
 
     [Authorize(Roles = "Admin,Manager")]
@@ -321,12 +373,19 @@ public class CustomerController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    private async Task<CustomerListViewModel> BuildCustomerListViewModelAsync(
-        User currentUser,
+    private CustomerCreateViewModel BuildCustomerCreateViewModel(
         CustomerInputModel? newCustomer = null,
-        CustomerFilterInputModel? filters = null)
+        IEnumerable<string>? bulkUploadErrors = null)
     {
-        filters ??= new CustomerFilterInputModel();
+        return new CustomerCreateViewModel
+        {
+            NewCustomer = newCustomer ?? new CustomerInputModel(),
+            BulkUploadErrors = bulkUploadErrors?.ToArray() ?? Array.Empty<string>()
+        };
+    }
+
+    private async Task<List<Customer>> GetCustomersWithAssignmentsAsync(User currentUser)
+    {
         var customers = (await _customerService.GetCustomersForUserAsync(currentUser)).ToList();
         var userLookup = (await _userService.GetAllUsersAsync(includeInactive: true))
             .ToDictionary(u => u.Id, u => u.FullName);
@@ -340,15 +399,43 @@ public class CustomerController : Controller
             }
         }
 
+        return customers;
+    }
+
+    private async Task<CustomerListViewModel> BuildCustomerListViewModelAsync(
+        User currentUser,
+        CustomerFilterInputModel? filters = null,
+        int pageNumber = 1,
+        int pageSize = DefaultPageSize,
+        CustomerInputModel? newCustomer = null)
+    {
+        filters ??= new CustomerFilterInputModel();
+        var normalizedPageSize = NormalizePageSize(pageSize);
+        var customers = await GetCustomersWithAssignmentsAsync(currentUser);
+
         var filteredCustomers = ApplyCustomerFilters(customers, filters).ToList();
+        var totalRecords = filteredCustomers.Count;
+        var totalPages = totalRecords == 0
+            ? 1
+            : (int)Math.Ceiling(totalRecords / (double)normalizedPageSize);
+        var currentPage = Math.Clamp(pageNumber, 1, totalPages);
+        var pagedCustomers = filteredCustomers
+            .Skip((currentPage - 1) * normalizedPageSize)
+            .Take(normalizedPageSize)
+            .ToList();
 
         return new CustomerListViewModel
         {
-            Customers = filteredCustomers,
+            Customers = pagedCustomers,
             CanEdit = IsManagerOrAdmin(currentUser.Role),
             NewCustomer = newCustomer ?? new CustomerInputModel(),
             Filters = filters,
-            HasActiveFilters = filters.HasValues
+            HasActiveFilters = filters.HasValues,
+            PageNumber = currentPage,
+            PageSize = normalizedPageSize,
+            TotalRecords = totalRecords,
+            TotalPages = totalPages,
+            PageSizeOptions = PageSizeChoices
         };
     }
 
@@ -363,6 +450,7 @@ public class CustomerController : Controller
             var term = filters.SearchTerm.Trim();
             query = query.Where(customer =>
                 (!string.IsNullOrWhiteSpace(customer.Name) && customer.Name.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrWhiteSpace(customer.Email) && customer.Email.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
                 (!string.IsNullOrWhiteSpace(customer.MobileNumber) && customer.MobileNumber.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
                 (!string.IsNullOrWhiteSpace(customer.Location) && customer.Location.Contains(term, StringComparison.OrdinalIgnoreCase)));
         }
@@ -396,6 +484,12 @@ public class CustomerController : Controller
         }
 
         return query;
+    }
+
+    private static int NormalizePageSize(int pageSize)
+    {
+        var clamped = Math.Clamp(pageSize, MinPageSize, MaxPageSize);
+        return PageSizeChoices.Contains(clamped) ? clamped : DefaultPageSize;
     }
 
     private async Task<BulkAssignCustomersViewModel> BuildBulkAssignViewModelAsync(
@@ -442,6 +536,7 @@ public class CustomerController : Controller
         var headers = new[]
         {
             "Name",
+            "Email",
             "Mobile",
             "Location",
             "Insurance Type",
@@ -461,13 +556,14 @@ public class CustomerController : Controller
         foreach (var customer in customers)
         {
             worksheet.Cell(row, 1).Value = customer.Name;
-            worksheet.Cell(row, 2).Value = customer.MobileNumber;
-            worksheet.Cell(row, 3).Value = customer.Location;
-            worksheet.Cell(row, 4).Value = customer.InsuranceType ?? "-";
-            worksheet.Cell(row, 5).Value = customer.Income.HasValue ? customer.Income.Value : "-";
-            worksheet.Cell(row, 6).Value = customer.SourceOfIncome ?? "-";
-            worksheet.Cell(row, 7).Value = customer.FamilyMembers.HasValue ? customer.FamilyMembers.Value : "-";
-            worksheet.Cell(row, 8).Value = customer.AssignedEmployeeName ?? "Unassigned";
+            worksheet.Cell(row, 2).Value = customer.Email;
+            worksheet.Cell(row, 3).Value = customer.MobileNumber;
+            worksheet.Cell(row, 4).Value = customer.Location;
+            worksheet.Cell(row, 5).Value = customer.InsuranceType ?? "-";
+            worksheet.Cell(row, 6).Value = customer.Income.HasValue ? customer.Income.Value : "-";
+            worksheet.Cell(row, 7).Value = customer.SourceOfIncome ?? "-";
+            worksheet.Cell(row, 8).Value = customer.FamilyMembers.HasValue ? customer.FamilyMembers.Value : "-";
+            worksheet.Cell(row, 9).Value = customer.AssignedEmployeeName ?? "Unassigned";
             row++;
         }
 
@@ -499,6 +595,7 @@ public class CustomerController : Controller
                         columns.RelativeColumn(2);
                         columns.RelativeColumn(2);
                         columns.RelativeColumn(2);
+                        columns.RelativeColumn(2);
                         columns.RelativeColumn(1.5f);
                         columns.RelativeColumn(2);
                     });
@@ -506,6 +603,7 @@ public class CustomerController : Controller
                     table.Header(header =>
                     {
                         header.Cell().Element(CellStyle).Text("Name").SemiBold();
+                        header.Cell().Element(CellStyle).Text("Email").SemiBold();
                         header.Cell().Element(CellStyle).Text("Mobile").SemiBold();
                         header.Cell().Element(CellStyle).Text("Location").SemiBold();
                         header.Cell().Element(CellStyle).Text("Insurance").SemiBold();
@@ -516,6 +614,7 @@ public class CustomerController : Controller
                     foreach (var customer in customers)
                     {
                         table.Cell().Element(CellStyle).Text(customer.Name);
+                        table.Cell().Element(CellStyle).Text(customer.Email);
                         table.Cell().Element(CellStyle).Text(customer.MobileNumber);
                         table.Cell().Element(CellStyle).Text(customer.Location);
                         table.Cell().Element(CellStyle).Text(customer.InsuranceType ?? "-");
@@ -712,6 +811,7 @@ public class CustomerController : Controller
         ImportResult result)
     {
         var name = GetTrimmedValue(rowValues, "Name");
+        var email = GetTrimmedValue(rowValues, "Email");
         var mobile = GetTrimmedValue(rowValues, "MobileNumber");
         var location = GetTrimmedValue(rowValues, "Location");
 
@@ -726,6 +826,18 @@ public class CustomerController : Controller
         if (string.IsNullOrWhiteSpace(name))
         {
             result.Errors.Add($"Row {rowNumber}: Name is required.");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            result.Errors.Add($"Row {rowNumber}: Email is required.");
+            return;
+        }
+
+        if (!EmailValidator.IsValid(email))
+        {
+            result.Errors.Add($"Row {rowNumber}: Email '{email}' is invalid.");
             return;
         }
 
@@ -774,6 +886,7 @@ public class CustomerController : Controller
         var customer = new Customer
         {
             Name = name!,
+            Email = email!,
             MobileNumber = mobile!,
             Location = location!,
             InsuranceType = GetTrimmedValue(rowValues, "InsuranceType"),
@@ -803,6 +916,7 @@ public class CustomerController : Controller
         return compact switch
         {
             "name" or "customername" => "Name",
+            "email" or "emailid" or "emailaddress" => "Email",
             "mobile" or "mobilenumber" or "mobileno" or "phonenumber" or "phone" or "contactnumber" => "MobileNumber",
             "location" or "city" or "area" => "Location",
             "insurancetype" or "insurance" => "InsuranceType",

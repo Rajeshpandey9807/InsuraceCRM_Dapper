@@ -9,6 +9,9 @@ public class Customer
     [Required, StringLength(150)]
     public string Name { get; set; } = string.Empty;
 
+    [Required, EmailAddress, StringLength(256)]
+    public string Email { get; set; } = string.Empty;
+
     [Required, Phone]
     public string MobileNumber { get; set; } = string.Empty;
 
