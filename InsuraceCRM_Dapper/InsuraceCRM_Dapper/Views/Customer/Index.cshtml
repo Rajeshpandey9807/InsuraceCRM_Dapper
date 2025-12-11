@@ -149,10 +149,10 @@
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="page" value="@Model.PageNumber" />
                 <input type="hidden" name="pageSize" value="@Model.PageSize" />
-                <input type="hidden" name="SearchTerm" value="@filters.SearchTerm" />
-                <input type="hidden" name="Location" value="@filters.Location" />
-                <input type="hidden" name="InsuranceType" value="@filters.InsuranceType" />
-                <input type="hidden" name="Assignment" value="@filters.Assignment" />
+                <input type="hidden" name="filters.SearchTerm" value="@filters.SearchTerm" />
+                <input type="hidden" name="filters.Location" value="@filters.Location" />
+                <input type="hidden" name="filters.InsuranceType" value="@filters.InsuranceType" />
+                <input type="hidden" name="filters.Assignment" value="@filters.Assignment" />
                 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
                 <div class="row g-3">
                     <div class="col-md-6">
