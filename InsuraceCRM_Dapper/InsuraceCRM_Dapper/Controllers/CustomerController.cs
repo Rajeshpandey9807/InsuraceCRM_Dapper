@@ -210,6 +210,47 @@ public class CustomerController : Controller
     }
 
     [Authorize(Roles = "Admin,Manager")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateInline(
+        [Bind(Prefix = "NewCustomer")] CustomerInputModel inputModel,
+        [FromForm] CustomerFilterInputModel? filters,
+        [FromForm] int page = 1,
+        [FromForm] int pageSize = DefaultPageSize)
+    {
+        var currentUser = await GetCurrentUserAsync();
+        if (currentUser is null)
+        {
+            return Challenge();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            ViewData["ShowCreateDrawer"] = true;
+            var viewModel = await BuildCustomerListViewModelAsync(
+                currentUser,
+                filters: filters,
+                pageNumber: page,
+                pageSize: pageSize,
+                newCustomer: inputModel);
+            return View("Index", viewModel);
+        }
+
+        var customer = inputModel.ToCustomer(currentUser.Id);
+        await _customerService.CreateCustomerAsync(customer);
+        TempData["CustomerSuccess"] = "Customer added successfully.";
+        return RedirectToAction(nameof(Index), new
+        {
+            SearchTerm = filters?.SearchTerm,
+            Location = filters?.Location,
+            InsuranceType = filters?.InsuranceType,
+            Assignment = filters?.Assignment,
+            page,
+            pageSize
+        });
+    }
+
+    [Authorize(Roles = "Admin,Manager")]
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
@@ -365,7 +406,8 @@ public class CustomerController : Controller
         User currentUser,
         CustomerFilterInputModel? filters = null,
         int pageNumber = 1,
-        int pageSize = DefaultPageSize)
+        int pageSize = DefaultPageSize,
+        CustomerInputModel? newCustomer = null)
     {
         filters ??= new CustomerFilterInputModel();
         var normalizedPageSize = NormalizePageSize(pageSize);
@@ -386,6 +428,7 @@ public class CustomerController : Controller
         {
             Customers = pagedCustomers,
             CanEdit = IsManagerOrAdmin(currentUser.Role),
+            NewCustomer = newCustomer ?? new CustomerInputModel(),
             Filters = filters,
             HasActiveFilters = filters.HasValues,
             PageNumber = currentPage,
