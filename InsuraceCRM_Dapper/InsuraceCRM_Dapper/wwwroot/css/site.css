@@ -210,3 +210,8 @@ body {
 .customer-action-form button {
   width: 100%;
 }
+
+.customer-create-drawer {
+  top: var(--top-bar-height);
+  height: calc(100% - var(--top-bar-height));
+}
