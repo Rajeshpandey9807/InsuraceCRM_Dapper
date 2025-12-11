@@ -51,4 +51,11 @@ public class DashboardRepository : IDashboardRepository
         using var connection = await _connectionFactory.CreateConnectionAsync();
         return await connection.ExecuteScalarAsync<int>(sql, new { EmployeeId = employeeId });
     }
+
+    public async Task<int> GetTotalCustomerCountAsync()
+    {
+        const string sql = "SELECT COUNT(*) FROM Customers;";
+        using var connection = await _connectionFactory.CreateConnectionAsync();
+        return await connection.ExecuteScalarAsync<int>(sql);
+    }
 }
